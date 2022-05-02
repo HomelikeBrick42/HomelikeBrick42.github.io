@@ -10,10 +10,33 @@
                 border: 0;
             }
 
+            .canvas-container {
+                position: relative;
+            }
+
+            button {
+                position: absolute;
+                left: 10px;
+                width: 20px;
+                height: 20px;
+            }
+
+            #zoom-in {
+                top: 10px;
+            }
+
+            #zoom-out {
+                top: 40px;
+            }
+
         </style>
     </head>
     <body>
-        <canvas id="canvas"></canvas>
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+            <button id="zoom-in"></button>
+            <button id="zoom-out"></button>
+        </div>
         <script src="index.js" type="text/javascript"></script>
     </body>
 </html>

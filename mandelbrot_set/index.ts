@@ -1,14 +1,18 @@
 const Main = (): void => {
-	const gl = ((): WebGL2RenderingContext => {
-		const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-		return canvas.getContext("webgl2");
-	})();
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    const zoomIn = document.getElementById("zoom-in") as HTMLButtonElement;
+    const zoomOut = document.getElementById("zoom-out") as HTMLButtonElement;
 
-	let shader: WebGLProgram;
+    const gl = canvas.getContext("webgl2");
 
-	const Init = (): void => {
-		let vertexShader = gl.createShader(gl.VERTEX_SHADER);
-		gl.shaderSource(vertexShader, `#version 300 es
+    let shader: WebGLProgram;
+    let offsetX: number = 0;
+    let offsetY: number = 0;
+    let zoom: number = 2;
+
+    const Init = (): void => {
+        let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, `#version 300 es
 
 			precision mediump float;
 
@@ -22,14 +26,14 @@ const Main = (): void => {
 				gl_Position = vec4(v_UV * 2.0 - 1.0, 0.0, 1.0);
 			}
 		`);
-		gl.compileShader(vertexShader);
+        gl.compileShader(vertexShader);
 
-		if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS) as boolean) {
-			console.error(gl.getShaderInfoLog(vertexShader));
-		}
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS) as boolean) {
+            console.error(gl.getShaderInfoLog(vertexShader));
+        }
 
-		let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-		gl.shaderSource(fragmentShader, `#version 300 es
+        let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, `#version 300 es
 
 			precision mediump float;
 
@@ -38,6 +42,8 @@ const Main = (): void => {
 			in vec2 v_UV;
 
 			uniform float u_Aspect;
+			uniform vec2 u_Offset;
+			uniform float u_Zoom;
 
 			vec3 hueToRGB(float h) {
 				float kr = mod(5.0 + h * 6.0, 6.0);
@@ -59,8 +65,10 @@ const Main = (): void => {
 			}
 
 			void main() {
-				vec2 uv = v_UV * 4.0 - 2.0;
+				vec2 uv = v_UV * 2.0 - 1.0;
 				uv.x /= u_Aspect;
+                uv *= u_Zoom;
+                uv += u_Offset;
 
 				vec2 value = vec2(0, 0);
 
@@ -81,51 +89,74 @@ const Main = (): void => {
 				}
 			}
 		`);
-		gl.compileShader(fragmentShader);
+        gl.compileShader(fragmentShader);
 
-		if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS) as boolean) {
-			console.error(gl.getShaderInfoLog(fragmentShader));
-		}
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS) as boolean) {
+            console.error(gl.getShaderInfoLog(fragmentShader));
+        }
 
-		shader = gl.createProgram();
-		gl.attachShader(shader, vertexShader);
-		gl.attachShader(shader, fragmentShader);
-		gl.linkProgram(shader);
+        shader = gl.createProgram();
+        gl.attachShader(shader, vertexShader);
+        gl.attachShader(shader, fragmentShader);
+        gl.linkProgram(shader);
 
-		if (!gl.getProgramParameter(shader, gl.LINK_STATUS) as boolean) {
-			console.error(gl.getProgramInfoLog(shader));
-		}
+        if (!gl.getProgramParameter(shader, gl.LINK_STATUS) as boolean) {
+            console.error(gl.getProgramInfoLog(shader));
+        }
 
-		gl.detachShader(shader, vertexShader);
-		gl.detachShader(shader, fragmentShader);
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
-	}
+        gl.detachShader(shader, vertexShader);
+        gl.detachShader(shader, fragmentShader);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+    }
 
-	const Update = (dt: number): void => {
-		gl.useProgram(shader);
-		gl.uniform1f(gl.getUniformLocation(shader, "u_Aspect"), gl.canvas.height / gl.canvas.width);
-		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-	}
+    const Update = (dt: number): void => {
+        gl.useProgram(shader);
+        gl.uniform1f(gl.getUniformLocation(shader, "u_Aspect"), gl.canvas.height / gl.canvas.width);
+        gl.uniform2f(gl.getUniformLocation(shader, "u_Offset"), offsetX, offsetY);
+        gl.uniform1f(gl.getUniformLocation(shader, "u_Zoom"), zoom);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
 
-	const ResizeCallback = (): void => {
-		gl.canvas.width = window.innerWidth - 4;
-		gl.canvas.height = window.innerHeight - 4;
-		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-	}
-	window.onresize = ResizeCallback;
+    const ResizeCallback = (): void => {
+        gl.canvas.width = window.innerWidth - 4;
+        gl.canvas.height = window.innerHeight - 4;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    }
+    window.onresize = ResizeCallback;
 
-	Init();
-	ResizeCallback();
+    let clicking: boolean = false;
+    window.onmousedown = (e: MouseEvent): void => {
+        clicking = true;
+    };
+    window.onmouseup = (e: MouseEvent): void => {
+        clicking = false;
+    };
+    window.onmousemove = (e: MouseEvent): void => {
+        if (clicking) {
+            offsetX -= e.movementX / canvas.width * zoom * 2.5;
+            offsetY += e.movementY / canvas.width * zoom * 2.5;
+        }
+    };
 
-	let lastTime = 0;
-	const Loop = (time: number): void => {
-		const dt = time - lastTime;
-		lastTime = time;
-		Update(dt);
-		requestAnimationFrame(Loop);
-	}
-	requestAnimationFrame(Loop);
+    zoomIn.onclick = (e: MouseEvent) => {
+        zoom /= 1.3;
+    };
+    zoomOut.onclick = (e: MouseEvent) => {
+        zoom *= 1.3;
+    };
+
+    Init();
+    ResizeCallback();
+
+    let lastTime = 0;
+    const Loop = (time: number): void => {
+        const dt = time - lastTime;
+        lastTime = time;
+        Update(dt);
+        requestAnimationFrame(Loop);
+    }
+    requestAnimationFrame(Loop);
 }
 
 Main();
