@@ -16,32 +16,47 @@
 
             button {
                 position: absolute;
-                left: 10px;
+                top: 10px;
                 width: 20px;
                 height: 20px;
             }
 
             #zoom-in {
-                top: 10px;
+                left: 10px;
             }
 
             #zoom-out {
-                top: 40px;
+                left: 40px;
             }
 
-            input {
+            #start input {
                 position: absolute;
-                left: 40px;
+                left: 60px;
                 width: 200px;
                 height: 20px;
             }
 
+            #start p {
+                position: absolute;
+                left: 10px;
+                width: 200px;
+                height: 20px;
+            }
+
+            #start-x-name {
+                top: 40px;
+            }
+
             #start-x {
-                top: 10px;
+                top: 40px;
+            }
+
+            #start-y-name {
+                top: 70px;
             }
 
             #start-y {
-                top: 40px;
+                top: 70px;
             }
 
         </style>
@@ -49,10 +64,14 @@
     <body>
         <div id="canvas-container">
             <canvas id="canvas"></canvas>
-            <button id="zoom-in"></button>
-            <button id="zoom-out"></button>
-            <input id="start-x" type="range" min="-20000" max="20000" value="0"></input>
-            <input id="start-y" type="range" min="-20000" max="20000" value="0"></input>
+            <button id="zoom-in">+</button>
+            <button id="zoom-out">-</button>
+            <div id="start">
+                <p id="start-x-name">Start X</p>
+                <input id="start-x" type="range" min="-20000" max="20000" value="0"></input>
+                <p id="start-y-name">Start Y</p>
+                <input id="start-y" type="range" min="-20000" max="20000" value="0"></input>
+            </div>
         </div>
         <script src="index.js" type="text/javascript"></script>
     </body>
