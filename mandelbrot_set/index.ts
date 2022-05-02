@@ -2,6 +2,8 @@ const Main = (): void => {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     const zoomIn = document.getElementById("zoom-in") as HTMLButtonElement;
     const zoomOut = document.getElementById("zoom-out") as HTMLButtonElement;
+    const startX = document.getElementById("start-x") as HTMLInputElement;
+    const startY = document.getElementById("start-y") as HTMLInputElement;
 
     const gl = canvas.getContext("webgl2");
 
@@ -44,6 +46,7 @@ const Main = (): void => {
 			uniform float u_Aspect;
 			uniform vec2 u_Offset;
 			uniform float u_Zoom;
+			uniform vec2 u_Start;
 
 			vec3 hueToRGB(float h) {
 				float kr = mod(5.0 + h * 6.0, 6.0);
@@ -70,9 +73,9 @@ const Main = (): void => {
                 uv *= u_Zoom;
                 uv += u_Offset;
 
-				vec2 value = vec2(0, 0);
+				const int maxIterations = 1000;
 
-				int maxIterations = 1000;
+				vec2 value = u_Start;
 
 				int i;
 				for (i = 0; i < maxIterations; i++) {
@@ -115,6 +118,7 @@ const Main = (): void => {
         gl.uniform1f(gl.getUniformLocation(shader, "u_Aspect"), gl.canvas.height / gl.canvas.width);
         gl.uniform2f(gl.getUniformLocation(shader, "u_Offset"), offsetX, offsetY);
         gl.uniform1f(gl.getUniformLocation(shader, "u_Zoom"), zoom);
+        gl.uniform2f(gl.getUniformLocation(shader, "u_Start"), parseInt(startX.value) / 10000, parseInt(startY.value) / 10000);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 

@@ -2,6 +2,8 @@ var Main = function () {
     var canvas = document.getElementById("canvas");
     var zoomIn = document.getElementById("zoom-in");
     var zoomOut = document.getElementById("zoom-out");
+    var startX = document.getElementById("start-x");
+    var startY = document.getElementById("start-y");
     var gl = canvas.getContext("webgl2");
     var shader;
     var offsetX = 0;
@@ -15,7 +17,7 @@ var Main = function () {
             console.error(gl.getShaderInfoLog(vertexShader));
         }
         var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, "#version 300 es\n\n\t\t\tprecision mediump float;\n\n\t\t\tout vec4 o_Color;\n\n\t\t\tin vec2 v_UV;\n\n\t\t\tuniform float u_Aspect;\n\t\t\tuniform vec2 u_Offset;\n\t\t\tuniform float u_Zoom;\n\n\t\t\tvec3 hueToRGB(float h) {\n\t\t\t\tfloat kr = mod(5.0 + h * 6.0, 6.0);\n\t\t\t\tfloat kg = mod(3.0 + h * 6.0, 6.0);\n\t\t\t\tfloat kb = mod(1.0 + h * 6.0, 6.0);\n\n\t\t\t\tfloat r = 1.0 - max(min(kr, min(4.0 - kr, 1.0)), 0.0);\n\t\t\t\tfloat g = 1.0 - max(min(kg, min(4.0 - kg, 1.0)), 0.0);\n\t\t\t\tfloat b = 1.0 - max(min(kb, min(4.0 - kb, 1.0)), 0.0);\n\n\t\t\t\treturn vec3(r, g, b);\n\t\t\t}\n\n\t\t\tvec2 multiply_complex(vec2 a, vec2 b) {\n\t\t\t\treturn vec2(\n\t\t\t\t\ta.x * b.x - a.y * b.y,\n\t\t\t\t\ta.x * b.y + b.x * a.y\n\t\t\t\t);\n\t\t\t}\n\n\t\t\tvoid main() {\n\t\t\t\tvec2 uv = v_UV * 2.0 - 1.0;\n\t\t\t\tuv.x /= u_Aspect;\n                uv *= u_Zoom;\n                uv += u_Offset;\n\n\t\t\t\tvec2 value = vec2(0, 0);\n\n\t\t\t\tint maxIterations = 1000;\n\n\t\t\t\tint i;\n\t\t\t\tfor (i = 0; i < maxIterations; i++) {\n\t\t\t\t\tvalue = multiply_complex(value, value) + uv;\n\t\t\t\t\tif (dot(value, value) > 4.0) {\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif (i == maxIterations) {\n\t\t\t\t\to_Color = vec4(0.0, 0.0, 0.0, 1.0);\n\t\t\t\t} else {\n\t\t\t\t\to_Color = vec4(hueToRGB(float(i) * 0.01), 1.0);\n\t\t\t\t}\n\t\t\t}\n\t\t");
+        gl.shaderSource(fragmentShader, "#version 300 es\n\n\t\t\tprecision mediump float;\n\n\t\t\tout vec4 o_Color;\n\n\t\t\tin vec2 v_UV;\n\n\t\t\tuniform float u_Aspect;\n\t\t\tuniform vec2 u_Offset;\n\t\t\tuniform float u_Zoom;\n\t\t\tuniform vec2 u_Start;\n\n\t\t\tvec3 hueToRGB(float h) {\n\t\t\t\tfloat kr = mod(5.0 + h * 6.0, 6.0);\n\t\t\t\tfloat kg = mod(3.0 + h * 6.0, 6.0);\n\t\t\t\tfloat kb = mod(1.0 + h * 6.0, 6.0);\n\n\t\t\t\tfloat r = 1.0 - max(min(kr, min(4.0 - kr, 1.0)), 0.0);\n\t\t\t\tfloat g = 1.0 - max(min(kg, min(4.0 - kg, 1.0)), 0.0);\n\t\t\t\tfloat b = 1.0 - max(min(kb, min(4.0 - kb, 1.0)), 0.0);\n\n\t\t\t\treturn vec3(r, g, b);\n\t\t\t}\n\n\t\t\tvec2 multiply_complex(vec2 a, vec2 b) {\n\t\t\t\treturn vec2(\n\t\t\t\t\ta.x * b.x - a.y * b.y,\n\t\t\t\t\ta.x * b.y + b.x * a.y\n\t\t\t\t);\n\t\t\t}\n\n\t\t\tvoid main() {\n\t\t\t\tvec2 uv = v_UV * 2.0 - 1.0;\n\t\t\t\tuv.x /= u_Aspect;\n                uv *= u_Zoom;\n                uv += u_Offset;\n\n\t\t\t\tconst int maxIterations = 1000;\n\n\t\t\t\tvec2 value = u_Start;\n\n\t\t\t\tint i;\n\t\t\t\tfor (i = 0; i < maxIterations; i++) {\n\t\t\t\t\tvalue = multiply_complex(value, value) + uv;\n\t\t\t\t\tif (dot(value, value) > 4.0) {\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif (i == maxIterations) {\n\t\t\t\t\to_Color = vec4(0.0, 0.0, 0.0, 1.0);\n\t\t\t\t} else {\n\t\t\t\t\to_Color = vec4(hueToRGB(float(i) * 0.01), 1.0);\n\t\t\t\t}\n\t\t\t}\n\t\t");
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
             console.error(gl.getShaderInfoLog(fragmentShader));
@@ -37,6 +39,7 @@ var Main = function () {
         gl.uniform1f(gl.getUniformLocation(shader, "u_Aspect"), gl.canvas.height / gl.canvas.width);
         gl.uniform2f(gl.getUniformLocation(shader, "u_Offset"), offsetX, offsetY);
         gl.uniform1f(gl.getUniformLocation(shader, "u_Zoom"), zoom);
+        gl.uniform2f(gl.getUniformLocation(shader, "u_Start"), parseInt(startX.value) / 10000, parseInt(startY.value) / 10000);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
     var ResizeCallback = function () {

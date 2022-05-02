@@ -29,6 +29,21 @@
                 top: 40px;
             }
 
+            input {
+                position: absolute;
+                left: 40px;
+                width: 200px;
+                height: 20px;
+            }
+
+            #start-x {
+                top: 10px;
+            }
+
+            #start-y {
+                top: 40px;
+            }
+
         </style>
     </head>
     <body>
@@ -36,6 +51,8 @@
             <canvas id="canvas"></canvas>
             <button id="zoom-in"></button>
             <button id="zoom-out"></button>
+            <input id="start-x" type="range" min="-20000" max="20000" value="0"></input>
+            <input id="start-y" type="range" min="-20000" max="20000" value="0"></input>
         </div>
         <script src="index.js" type="text/javascript"></script>
     </body>
