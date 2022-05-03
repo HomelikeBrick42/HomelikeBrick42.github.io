@@ -130,13 +130,13 @@ const Main = (): void => {
     window.onresize = ResizeCallback;
 
     let clicking: boolean = false;
-    window.onmousedown = (e: MouseEvent): void => {
+    canvas.onmousedown = (e: MouseEvent): void => {
         clicking = true;
     };
-    window.onmouseup = (e: MouseEvent): void => {
+    canvas.onmouseup = (e: MouseEvent): void => {
         clicking = false;
     };
-    window.onmousemove = (e: MouseEvent): void => {
+    canvas.onmousemove = (e: MouseEvent): void => {
         if (clicking) {
             offsetX -= e.movementX / canvas.width * zoom * 2.5;
             offsetY += e.movementY / canvas.width * zoom * 2.5;

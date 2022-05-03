@@ -49,13 +49,13 @@ var Main = function () {
     };
     window.onresize = ResizeCallback;
     var clicking = false;
-    window.onmousedown = function (e) {
+    canvas.onmousedown = function (e) {
         clicking = true;
     };
-    window.onmouseup = function (e) {
+    canvas.onmouseup = function (e) {
         clicking = false;
     };
-    window.onmousemove = function (e) {
+    canvas.onmousemove = function (e) {
         if (clicking) {
             offsetX -= e.movementX / canvas.width * zoom * 2.5;
             offsetY += e.movementY / canvas.width * zoom * 2.5;
