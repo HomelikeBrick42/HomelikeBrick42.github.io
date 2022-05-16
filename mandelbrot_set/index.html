@@ -29,6 +29,28 @@
                 left: 40px;
             }
 
+            input {
+                position: absolute;
+                top: 10px;
+                width: 20px;
+                height: 20px;
+            }
+
+            p {
+                position: absolute;
+                top: 12px;
+                width: 200px;
+                height: 20px;
+            }
+
+            #smooth-name {
+                left: 70px;
+            }
+
+            #smooth {
+                left: 125px;
+            }
+
             #start input {
                 position: absolute;
                 left: 60px;
@@ -66,6 +88,8 @@
             <canvas id="canvas"></canvas>
             <button id="zoom-in">+</button>
             <button id="zoom-out">-</button>
+            <p id="smooth-name">Smooth</p>
+            <input id="smooth" type="checkbox"></input>
             <div id="start">
                 <p id="start-x-name">Start X</p>
                 <input id="start-x" type="range" min="-20000" max="20000" value="0"></input>

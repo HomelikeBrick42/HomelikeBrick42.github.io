@@ -1,5 +1,6 @@
 const Main = (): void => {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    const smooth = document.getElementById("smooth") as HTMLInputElement;
     const zoomIn = document.getElementById("zoom-in") as HTMLButtonElement;
     const zoomOut = document.getElementById("zoom-out") as HTMLButtonElement;
     const startX = document.getElementById("start-x") as HTMLInputElement;
@@ -47,6 +48,7 @@ const Main = (): void => {
 			uniform vec2 u_Offset;
 			uniform float u_Zoom;
 			uniform vec2 u_Start;
+			uniform int u_Smooth;
 
 			vec3 hueToRGB(float h) {
 				float kr = mod(5.0 + h * 6.0, 6.0);
@@ -87,9 +89,15 @@ const Main = (): void => {
 
 				if (i == maxIterations) {
 					o_Color = vec4(0.0, 0.0, 0.0, 1.0);
+				} else if (u_Smooth != 0) {
+                    float smoothIter =
+                                    float(i)
+                                    + log(log(4.0)) / log(2.0)
+                                    - log(log(dot(value, value))) / log(2.0);
+                    o_Color = vec4(hueToRGB(smoothIter * 0.01), 1.0);
 				} else {
-					o_Color = vec4(hueToRGB(float(i) * 0.01), 1.0);
-				}
+                    o_Color = vec4(hueToRGB(float(i) * 0.01), 1.0);
+                }
 			}
 		`);
         gl.compileShader(fragmentShader);
@@ -119,6 +127,7 @@ const Main = (): void => {
         gl.uniform2f(gl.getUniformLocation(shader, "u_Offset"), offsetX, offsetY);
         gl.uniform1f(gl.getUniformLocation(shader, "u_Zoom"), zoom);
         gl.uniform2f(gl.getUniformLocation(shader, "u_Start"), parseInt(startX.value) / 10000, parseInt(startY.value) / 10000);
+        gl.uniform1i(gl.getUniformLocation(shader, "u_Smooth"), smooth.checked ? 1 : 0);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
