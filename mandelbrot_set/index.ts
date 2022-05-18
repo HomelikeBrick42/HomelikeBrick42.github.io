@@ -138,19 +138,43 @@ const Main = (): void => {
     }
     window.onresize = ResizeCallback;
 
-    let clicking: boolean = false;
-    canvas.onmousedown = (e: MouseEvent): void => {
-        clicking = true;
-    };
-    canvas.onmouseup = (e: MouseEvent): void => {
-        clicking = false;
-    };
-    canvas.onmousemove = (e: MouseEvent): void => {
-        if (clicking) {
-            offsetX -= e.movementX / canvas.width * zoom * 2.5;
-            offsetY += e.movementY / canvas.width * zoom * 2.5;
-        }
-    };
+    {
+        let clicking = false;
+        canvas.onmousedown = (): void => {
+            clicking = true;
+        };
+        canvas.onmouseup = (): void => {
+            clicking = false;
+        };
+        canvas.onmousemove = (e: MouseEvent): void => {
+            if (clicking) {
+                offsetX -= e.movementX / canvas.width * zoom * 2.5;
+                offsetY += e.movementY / canvas.width * zoom * 2.5;
+            }
+        };
+    }
+
+    {
+        let touching = false;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        canvas.addEventListener('touchstart', (e: TouchEvent): void => {
+            touching = true;
+            lastTouchX = e.touches[0].screenX;
+            lastTouchY = e.touches[0].screenY;
+        }, false);
+        canvas.addEventListener('touchend', (e: TouchEvent): void => {
+            touching = false;
+        }, false);
+        canvas.addEventListener('touchmove', (e: TouchEvent): void => {
+            if (touching) {
+                offsetX -= (e.touches[0].screenX - lastTouchX) / canvas.width * zoom * 2.5;
+                offsetY += (e.touches[0].screenY - lastTouchY) / canvas.width * zoom * 2.5;
+            }
+            lastTouchX = e.touches[0].screenX;
+            lastTouchY = e.touches[0].screenY;
+        }, false);
+    }
 
     zoomIn.onclick = (e: MouseEvent) => {
         zoom /= 1.3;

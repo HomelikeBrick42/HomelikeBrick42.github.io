@@ -50,19 +50,42 @@ var Main = function () {
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     };
     window.onresize = ResizeCallback;
-    var clicking = false;
-    canvas.onmousedown = function (e) {
-        clicking = true;
-    };
-    canvas.onmouseup = function (e) {
-        clicking = false;
-    };
-    canvas.onmousemove = function (e) {
-        if (clicking) {
-            offsetX -= e.movementX / canvas.width * zoom * 2.5;
-            offsetY += e.movementY / canvas.width * zoom * 2.5;
-        }
-    };
+    {
+        var clicking_1 = false;
+        canvas.onmousedown = function () {
+            clicking_1 = true;
+        };
+        canvas.onmouseup = function () {
+            clicking_1 = false;
+        };
+        canvas.onmousemove = function (e) {
+            if (clicking_1) {
+                offsetX -= e.movementX / canvas.width * zoom * 2.5;
+                offsetY += e.movementY / canvas.width * zoom * 2.5;
+            }
+        };
+    }
+    {
+        var touching_1 = false;
+        var lastTouchX_1 = 0;
+        var lastTouchY_1 = 0;
+        canvas.addEventListener('touchstart', function (e) {
+            touching_1 = true;
+            lastTouchX_1 = e.touches[0].screenX;
+            lastTouchY_1 = e.touches[0].screenY;
+        }, false);
+        canvas.addEventListener('touchend', function (e) {
+            touching_1 = false;
+        }, false);
+        canvas.addEventListener('touchmove', function (e) {
+            if (touching_1) {
+                offsetX -= (e.touches[0].screenX - lastTouchX_1) / canvas.width * zoom * 2.5;
+                offsetY += (e.touches[0].screenY - lastTouchY_1) / canvas.width * zoom * 2.5;
+            }
+            lastTouchX_1 = e.touches[0].screenX;
+            lastTouchY_1 = e.touches[0].screenY;
+        }, false);
+    }
     zoomIn.onclick = function (e) {
         zoom /= 1.3;
     };
