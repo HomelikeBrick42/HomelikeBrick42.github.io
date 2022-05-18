@@ -162,9 +162,11 @@ const Main = (): void => {
             touching = true;
             lastTouchX = e.touches[0].screenX;
             lastTouchY = e.touches[0].screenY;
+            e.preventDefault();
         }, false);
         canvas.addEventListener('touchend', (e: TouchEvent): void => {
             touching = false;
+            e.preventDefault();
         }, false);
         canvas.addEventListener('touchmove', (e: TouchEvent): void => {
             if (touching) {
@@ -173,6 +175,7 @@ const Main = (): void => {
             }
             lastTouchX = e.touches[0].screenX;
             lastTouchY = e.touches[0].screenY;
+            e.preventDefault();
         }, false);
     }
 

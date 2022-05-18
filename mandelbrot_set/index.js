@@ -73,9 +73,11 @@ var Main = function () {
             touching_1 = true;
             lastTouchX_1 = e.touches[0].screenX;
             lastTouchY_1 = e.touches[0].screenY;
+            e.preventDefault();
         }, false);
         canvas.addEventListener('touchend', function (e) {
             touching_1 = false;
+            e.preventDefault();
         }, false);
         canvas.addEventListener('touchmove', function (e) {
             if (touching_1) {
@@ -84,6 +86,7 @@ var Main = function () {
             }
             lastTouchX_1 = e.touches[0].screenX;
             lastTouchY_1 = e.touches[0].screenY;
+            e.preventDefault();
         }, false);
     }
     zoomIn.onclick = function (e) {
