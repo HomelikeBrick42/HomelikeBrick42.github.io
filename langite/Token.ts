@@ -4,6 +4,7 @@ namespace Langite {
 
     export enum TokenKind {
         EndOfFile = "EOF",
+        Newline = "Newline",
         Name = "Name",
     }
 

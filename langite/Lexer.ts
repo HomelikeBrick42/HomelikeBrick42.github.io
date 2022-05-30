@@ -4,8 +4,15 @@
 
 namespace Langite {
 
-    const SingleCharacters: { [character: string]: TokenKind } = { '\0': TokenKind.EndOfFile };
-    const DoubleCharacters: { [first_character: string]: { [second_character: string]: TokenKind } } = {};
+    const SingleCharacters: { [character: string]: TokenKind } = {
+        '\0': TokenKind.EndOfFile,
+        '\n': TokenKind.Newline,
+        '\r': TokenKind.Newline,
+    };
+    const DoubleCharacters: { [first_character: string]: { [second_character: string]: TokenKind } } = {
+        '\r': { '\n': TokenKind.Newline },
+        '\n': { '\r': TokenKind.Newline },
+    };
 
     export type char = string;
 

@@ -43,6 +43,7 @@ var Langite;
     let TokenKind;
     (function (TokenKind) {
         TokenKind["EndOfFile"] = "EOF";
+        TokenKind["Newline"] = "Newline";
         TokenKind["Name"] = "Name";
     })(TokenKind = Langite.TokenKind || (Langite.TokenKind = {}));
     class Token {
@@ -57,8 +58,15 @@ var Langite;
 })(Langite || (Langite = {}));
 var Langite;
 (function (Langite) {
-    const SingleCharacters = { '\0': Langite.TokenKind.EndOfFile };
-    const DoubleCharacters = {};
+    const SingleCharacters = {
+        '\0': Langite.TokenKind.EndOfFile,
+        '\n': Langite.TokenKind.Newline,
+        '\r': Langite.TokenKind.Newline,
+    };
+    const DoubleCharacters = {
+        '\r': { '\n': Langite.TokenKind.Newline },
+        '\n': { '\r': Langite.TokenKind.Newline },
+    };
     class Lexer {
         constructor(filepath, source) {
             this.Location = new Langite.SourceLocation(filepath, source, 0, 1, 1);
