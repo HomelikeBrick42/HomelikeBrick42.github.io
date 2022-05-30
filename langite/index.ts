@@ -1,6 +1,6 @@
 /// <reference path="./Lexer.ts"/>
 
-function OnCompile(filepath: string, source: string): string {
+function PrintTokens(filepath: string, source: string): string {
     try {
         const lexer = new Langite.Lexer(filepath, source);
         let result = "";
@@ -8,7 +8,7 @@ function OnCompile(filepath: string, source: string): string {
             const token = lexer.NextToken();
             result += `${token.Location}: '${token.Kind}'`;
             if (token.Value !== null)
-                result += `, Data: ${token.Value}`;
+                result += `, Data: "${token.Value}"`;
             result += '\n';
             if (token.Kind === Langite.TokenKind.EndOfFile)
                 break;
@@ -22,18 +22,35 @@ function OnCompile(filepath: string, source: string): string {
     }
 }
 
+const SaveKey = "Langite";
+
 window.addEventListener('load', (): void => {
     const CodeInput = document.getElementById("code_input") as HTMLTextAreaElement;
     const Output = document.getElementById("output") as HTMLTextAreaElement;
-    const CompileButton = document.getElementById("compile") as HTMLButtonElement;
+    const ShowTokens = document.getElementById("show_tokens") as HTMLButtonElement;
 
-    CompileButton.addEventListener('click', (): void => {
-        Output.value = OnCompile("unknown.langite", CodeInput.value);
-        const lines = Output.value.split(/\n|\r|\r\n/);
-        let cols = Output.cols;
-        lines.forEach(line => cols = Math.max(cols, line.length));
-        let rows = Math.max(lines.length, Output.rows);
-        Output.cols = cols;
-        Output.rows = rows;
+    const loadedData = window.localStorage.getItem(SaveKey);
+    if (loadedData !== null) {
+        CodeInput.value = loadedData;
+        ResizeTextArea(CodeInput);
+    }
+
+    ShowTokens.addEventListener('click', (): void => {
+        Output.value = PrintTokens("unknown.langite", CodeInput.value);
+        ResizeTextArea(CodeInput);
+        ResizeTextArea(Output);
+    });
+
+    window.addEventListener('beforeunload', (): void => {
+        window.localStorage.setItem(SaveKey, CodeInput.value);
     });
 });
+
+function ResizeTextArea(textArea: HTMLTextAreaElement): void {
+    const lines = textArea.value.split(/\n|\r|\r\n/);
+    let cols = textArea.cols;
+    lines.forEach(line => cols = Math.max(cols, line.length));
+    const rows = Math.max(lines.length, textArea.rows);
+    textArea.cols = cols;
+    textArea.rows = rows;
+}
