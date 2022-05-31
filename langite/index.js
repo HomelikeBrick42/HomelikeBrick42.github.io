@@ -76,6 +76,7 @@ var Langite;
         AstKind["Integer"] = "Integer";
         AstKind["Float"] = "Float";
         AstKind["Function"] = "Function";
+        AstKind["Return"] = "Return";
     })(AstKind = Langite.AstKind || (Langite.AstKind = {}));
     class Ast {
     }
@@ -245,6 +246,26 @@ var Langite;
         }
     }
     Langite.AstFunction = AstFunction;
+    class AstReturn extends Ast {
+        constructor(returnToken, value) {
+            super();
+            this.Kind = AstKind.Return;
+            this.ReturnToken = returnToken;
+            this.Value = value;
+        }
+        GetLocation() {
+            return this.ReturnToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            if (this.Value !== null) {
+                result += `${GetIndent(indent + 1)}Value:\n`;
+                result += this.Value.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+    Langite.AstReturn = AstReturn;
 })(Langite || (Langite = {}));
 var Langite;
 (function (Langite) {
@@ -449,6 +470,17 @@ var Langite;
             switch (this.Current.Kind) {
                 case Langite.TokenKind.OpenBrace:
                     return this.ParseScope();
+                case Langite.TokenKind.ReturnKeyword: {
+                    const returnToken = this.ExpectToken(Langite.TokenKind.ReturnKeyword);
+                    let value = null;
+                    if (this.Current.Kind !== Langite.TokenKind.Newline &&
+                        this.Current.Kind !== Langite.TokenKind.EndOfFile &&
+                        this.Current.Kind !== Langite.TokenKind.CloseBrace &&
+                        this.Current.Kind !== Langite.TokenKind.CloseParenthesis) {
+                        value = this.ParseExpression();
+                    }
+                    return new Langite.AstReturn(returnToken, value);
+                }
                 default: {
                     const expression = this.ParseExpression();
                     if (expression.Kind === Langite.AstKind.Name && this.Current.Kind === Langite.TokenKind.Colon) {
@@ -470,11 +502,27 @@ var Langite;
                 }
             }
         }
+        ParseScope() {
+            const openBraceToken = this.ExpectToken(Langite.TokenKind.OpenBrace);
+            const statements = [];
+            while (this.Current.Kind !== Langite.TokenKind.CloseBrace) {
+                this.AllowMultipleNewlines();
+                if (this.Current.Kind === Langite.TokenKind.EndOfFile)
+                    break;
+                statements.push(this.ParseStatement());
+                this.ExpectNewline();
+            }
+            const closeBraceToken = this.ExpectToken(Langite.TokenKind.CloseBrace);
+            return new Langite.AstScope(openBraceToken, statements, closeBraceToken);
+        }
         ParseExpression() {
-            return this.ParsePrimaryExpression();
+            return this.ParseBinaryExpression(0);
         }
         ParseLeastExpression() {
-            return this.ParsePrimaryExpression();
+            return this.ParseBinaryExpression(Number.POSITIVE_INFINITY);
+        }
+        ParseBinaryExpression(parentPrecedence) {
+            throw new Langite.Unimplemented(this.Current.Location, "`ParseBinaryExpression` is not implemented");
         }
         ParsePrimaryExpression() {
             switch (this.Current.Kind) {
@@ -489,6 +537,12 @@ var Langite;
                 case Langite.TokenKind.Float: {
                     const float = this.ExpectToken(Langite.TokenKind.Float);
                     return new Langite.AstFloat(float);
+                }
+                case Langite.TokenKind.OpenParenthesis: {
+                    this.ExpectToken(Langite.TokenKind.OpenParenthesis);
+                    const expression = this.ParseExpression();
+                    this.ExpectToken(Langite.TokenKind.CloseParenthesis);
+                    return expression;
                 }
                 case Langite.TokenKind.FuncKeyword: {
                     const funcToken = this.ExpectToken(Langite.TokenKind.FuncKeyword);
@@ -520,19 +574,6 @@ var Langite;
                 }
             }
         }
-        ParseScope() {
-            const openBraceToken = this.ExpectToken(Langite.TokenKind.OpenBrace);
-            const statements = [];
-            while (this.Current.Kind !== Langite.TokenKind.CloseBrace) {
-                this.AllowMultipleNewlines();
-                if (this.Current.Kind === Langite.TokenKind.EndOfFile)
-                    break;
-                statements.push(this.ParseStatement());
-                this.ExpectNewline();
-            }
-            const closeBraceToken = this.ExpectToken(Langite.TokenKind.CloseBrace);
-            return new Langite.AstScope(openBraceToken, statements, closeBraceToken);
-        }
         NextToken() {
             const current = this.Current;
             this.Current = this.Lexer.NextToken();
@@ -563,7 +604,8 @@ var Langite;
             const token = this.NextToken();
             if (token.Kind !== Langite.TokenKind.Newline &&
                 token.Kind !== Langite.TokenKind.EndOfFile &&
-                token.Kind !== Langite.TokenKind.CloseBrace)
+                token.Kind !== Langite.TokenKind.CloseBrace &&
+                token.Kind !== Langite.TokenKind.CloseParenthesis)
                 throw new Langite.ExpectedNewline(token);
             return token;
         }

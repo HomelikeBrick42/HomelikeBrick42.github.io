@@ -37,6 +37,22 @@ namespace Langite {
                 case TokenKind.OpenBrace:
                     return this.ParseScope();
 
+                case TokenKind.ReturnKeyword: {
+                    const returnToken = this.ExpectToken(TokenKind.ReturnKeyword);
+                    let value: Ast | null = null;
+                    // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                    if (this.Current.Kind !== TokenKind.Newline &&
+                        // @ts-ignore
+                        this.Current.Kind !== TokenKind.EndOfFile &&
+                        // @ts-ignore
+                        this.Current.Kind !== TokenKind.CloseBrace &&
+                        // @ts-ignore
+                        this.Current.Kind !== TokenKind.CloseParenthesis) {
+                        value = this.ParseExpression();
+                    }
+                    return new AstReturn(returnToken, value);
+                }
+
                 default: {
                     const expression = this.ParseExpression();
                     if (expression.Kind === AstKind.Name && this.Current.Kind === TokenKind.Colon) {
@@ -64,15 +80,36 @@ namespace Langite {
             }
         }
 
+        private ParseScope(): AstScope {
+            const openBraceToken = this.ExpectToken(TokenKind.OpenBrace);
+            const statements: Ast[] = [];
+            while (this.Current.Kind !== TokenKind.CloseBrace) {
+                this.AllowMultipleNewlines();
+
+                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                if (this.Current.Kind === TokenKind.EndOfFile)
+                    break;
+
+                statements.push(this.ParseStatement());
+                this.ExpectNewline();
+            }
+            const closeBraceToken = this.ExpectToken(TokenKind.CloseBrace);
+            return new AstScope(openBraceToken, statements, closeBraceToken);
+        }
+
         public ParseExpression(): Ast {
-            return this.ParsePrimaryExpression();
+            return this.ParseBinaryExpression(0);
         }
 
         public ParseLeastExpression(): Ast {
-            return this.ParsePrimaryExpression();
+            return this.ParseBinaryExpression(Number.POSITIVE_INFINITY);
         }
 
-        public ParsePrimaryExpression(): Ast {
+        private ParseBinaryExpression(parentPrecedence: number): Ast {
+            throw new Unimplemented(this.Current.Location, "`ParseBinaryExpression` is not implemented");
+        }
+
+        private ParsePrimaryExpression(): Ast {
             switch (this.Current.Kind) {
                 case TokenKind.Name: {
                     const name = this.ExpectToken(TokenKind.Name);
@@ -87,6 +124,13 @@ namespace Langite {
                 case TokenKind.Float: {
                     const float = this.ExpectToken(TokenKind.Float);
                     return new AstFloat(float);
+                }
+
+                case TokenKind.OpenParenthesis: {
+                    this.ExpectToken(TokenKind.OpenParenthesis);
+                    const expression = this.ParseExpression();
+                    this.ExpectToken(TokenKind.CloseParenthesis);
+                    return expression;
                 }
 
                 case TokenKind.FuncKeyword: {
@@ -124,23 +168,6 @@ namespace Langite {
             }
         }
 
-        private ParseScope(): AstScope {
-            const openBraceToken = this.ExpectToken(TokenKind.OpenBrace);
-            const statements: Ast[] = [];
-            while (this.Current.Kind !== TokenKind.CloseBrace) {
-                this.AllowMultipleNewlines();
-
-                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
-                if (this.Current.Kind === TokenKind.EndOfFile)
-                    break;
-
-                statements.push(this.ParseStatement());
-                this.ExpectNewline();
-            }
-            const closeBraceToken = this.ExpectToken(TokenKind.CloseBrace);
-            return new AstScope(openBraceToken, statements, closeBraceToken);
-        }
-
         private NextToken(): Token {
             const current = this.Current;
             this.Current = this.Lexer.NextToken();
@@ -176,7 +203,8 @@ namespace Langite {
             const token = this.NextToken();
             if (token.Kind !== TokenKind.Newline &&
                 token.Kind !== TokenKind.EndOfFile &&
-                token.Kind !== TokenKind.CloseBrace)
+                token.Kind !== TokenKind.CloseBrace &&
+                token.Kind !== TokenKind.CloseParenthesis)
                 throw new ExpectedNewline(token);
             return token;
         }

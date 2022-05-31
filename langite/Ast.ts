@@ -11,6 +11,7 @@ namespace Langite {
         Integer = "Integer",
         Float = "Float",
         Function = "Function",
+        Return = "Return",
     }
 
     export abstract class Ast {
@@ -223,6 +224,31 @@ namespace Langite {
             if (this.Body !== null) {
                 result += `${GetIndent(indent + 1)}Body:\n`;
                 result += this.Body.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+
+    export class AstReturn extends Ast {
+        public Kind = AstKind.Return;
+        public ReturnToken: Token;
+        public Value: Ast | null;
+
+        public constructor(returnToken: Token, value: Ast | null) {
+            super();
+            this.ReturnToken = returnToken;
+            this.Value = value;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.ReturnToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            if (this.Value !== null) {
+                result += `${GetIndent(indent + 1)}Value:\n`;
+                result += this.Value.Print(indent + 2);
             }
             return result;
         }
