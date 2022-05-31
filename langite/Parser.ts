@@ -106,7 +106,59 @@ namespace Langite {
         }
 
         private ParseBinaryExpression(parentPrecedence: number): Ast {
-            throw new Unimplemented(this.Current.Location, "`ParseBinaryExpression` is not implemented");
+            function GetUnaryOperatorPrecedence(kind: TokenKind): number {
+                switch (kind) {
+                    case TokenKind.Plus:
+                    case TokenKind.Minus:
+                    case TokenKind.ExclamationMark:
+                        return 4;
+                    default:
+                        return 0;
+                }
+            }
+
+            function GetBinaryOperatorPrecedence(kind: TokenKind): number {
+                switch (kind) {
+                    case TokenKind.Asterisk:
+                    case TokenKind.Slash:
+                    case TokenKind.Percent:
+                        return 3;
+                    case TokenKind.Plus:
+                    case TokenKind.Minus:
+                        return 2;
+                    case TokenKind.LessThan:
+                    case TokenKind.GreaterThan:
+                    case TokenKind.LessThanEqual:
+                    case TokenKind.GreaterThanEqual:
+                    case TokenKind.EqualEqual:
+                    case TokenKind.ExclamationMarkEqual:
+                        return 1;
+                    default:
+                        return 0;
+                }
+            }
+
+            let left: Ast;
+            const unaryPrecedence = GetUnaryOperatorPrecedence(this.Current.Kind);
+            if (unaryPrecedence > 0) {
+                const operatorToken = this.NextToken();
+                const operand = this.ParseBinaryExpression(unaryPrecedence);
+                left = new AstUnary(operatorToken, operand);
+            } else {
+                left = this.ParsePrimaryExpression();
+            }
+
+            while (true) {
+                const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
+                if (binaryPrecedence <= parentPrecedence)
+                    break;
+
+                const operatorToken = this.NextToken();
+                const right = this.ParseBinaryExpression(binaryPrecedence);
+                left = new AstBinary(left, operatorToken, right);
+            }
+
+            return left;
         }
 
         private ParsePrimaryExpression(): Ast {

@@ -75,6 +75,8 @@ var Langite;
         AstKind["Name"] = "Name";
         AstKind["Integer"] = "Integer";
         AstKind["Float"] = "Float";
+        AstKind["Unary"] = "Unary";
+        AstKind["Binary"] = "Binary";
         AstKind["Function"] = "Function";
         AstKind["Return"] = "Return";
     })(AstKind = Langite.AstKind || (Langite.AstKind = {}));
@@ -215,6 +217,47 @@ var Langite;
         }
     }
     Langite.AstFloat = AstFloat;
+    class AstUnary extends Ast {
+        constructor(operatorToken, operand) {
+            super();
+            this.Kind = AstKind.Unary;
+            this.OperatorToken = operatorToken;
+            this.Operand = operand;
+        }
+        GetLocation() {
+            return this.OperatorToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}OperatorToken: '${this.OperatorToken.Kind}'\n`;
+            result += `${GetIndent(indent + 1)}Operand:\n`;
+            result += this.Operand.Print(indent + 2);
+            return result;
+        }
+    }
+    Langite.AstUnary = AstUnary;
+    class AstBinary extends Ast {
+        constructor(left, operatorToken, right) {
+            super();
+            this.Kind = AstKind.Binary;
+            this.Left = left;
+            this.OperatorToken = operatorToken;
+            this.Right = right;
+        }
+        GetLocation() {
+            return this.OperatorToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}OperatorToken: '${this.OperatorToken.Kind}'\n`;
+            result += `${GetIndent(indent + 1)}Left:\n`;
+            result += this.Left.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}Right:\n`;
+            result += this.Right.Print(indent + 2);
+            return result;
+        }
+    }
+    Langite.AstBinary = AstBinary;
     class AstFunction extends Ast {
         constructor(funcToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body) {
             super();
@@ -522,7 +565,55 @@ var Langite;
             return this.ParseBinaryExpression(Number.POSITIVE_INFINITY);
         }
         ParseBinaryExpression(parentPrecedence) {
-            throw new Langite.Unimplemented(this.Current.Location, "`ParseBinaryExpression` is not implemented");
+            function GetUnaryOperatorPrecedence(kind) {
+                switch (kind) {
+                    case Langite.TokenKind.Plus:
+                    case Langite.TokenKind.Minus:
+                    case Langite.TokenKind.ExclamationMark:
+                        return 4;
+                    default:
+                        return 0;
+                }
+            }
+            function GetBinaryOperatorPrecedence(kind) {
+                switch (kind) {
+                    case Langite.TokenKind.Asterisk:
+                    case Langite.TokenKind.Slash:
+                    case Langite.TokenKind.Percent:
+                        return 3;
+                    case Langite.TokenKind.Plus:
+                    case Langite.TokenKind.Minus:
+                        return 2;
+                    case Langite.TokenKind.LessThan:
+                    case Langite.TokenKind.GreaterThan:
+                    case Langite.TokenKind.LessThanEqual:
+                    case Langite.TokenKind.GreaterThanEqual:
+                    case Langite.TokenKind.EqualEqual:
+                    case Langite.TokenKind.ExclamationMarkEqual:
+                        return 1;
+                    default:
+                        return 0;
+                }
+            }
+            let left;
+            const unaryPrecedence = GetUnaryOperatorPrecedence(this.Current.Kind);
+            if (unaryPrecedence > 0) {
+                const operatorToken = this.NextToken();
+                const operand = this.ParseBinaryExpression(unaryPrecedence);
+                left = new Langite.AstUnary(operatorToken, operand);
+            }
+            else {
+                left = this.ParsePrimaryExpression();
+            }
+            while (true) {
+                const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
+                if (binaryPrecedence <= parentPrecedence)
+                    break;
+                const operatorToken = this.NextToken();
+                const right = this.ParseBinaryExpression(binaryPrecedence);
+                left = new Langite.AstBinary(left, operatorToken, right);
+            }
+            return left;
         }
         ParsePrimaryExpression() {
             switch (this.Current.Kind) {

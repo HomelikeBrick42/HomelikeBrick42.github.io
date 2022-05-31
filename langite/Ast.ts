@@ -10,6 +10,8 @@ namespace Langite {
         Name = "Name",
         Integer = "Integer",
         Float = "Float",
+        Unary = "Unary",
+        Binary = "Binary",
         Function = "Function",
         Return = "Return",
     }
@@ -184,6 +186,58 @@ namespace Langite {
         public override Print(indent: number): string {
             let result = PrintHeader(indent, this);
             result += `${GetIndent(indent + 1)}Value: '${this.FloatToken.Value}'\n`;
+            return result;
+        }
+    }
+
+    export class AstUnary extends Ast {
+        public Kind = AstKind.Unary;
+        public OperatorToken: Token;
+        public Operand: Ast;
+
+        public constructor(operatorToken: Token, operand: Ast) {
+            super();
+            this.OperatorToken = operatorToken;
+            this.Operand = operand;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.OperatorToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}OperatorToken: '${this.OperatorToken.Kind}'\n`;
+            result += `${GetIndent(indent + 1)}Operand:\n`;
+            result += this.Operand.Print(indent + 2);
+            return result;
+        }
+    }
+
+    export class AstBinary extends Ast {
+        public Kind = AstKind.Binary;
+        public Left: Ast;
+        public OperatorToken: Token;
+        public Right: Ast;
+
+        public constructor(left: Ast, operatorToken: Token, right: Ast) {
+            super();
+            this.Left = left;
+            this.OperatorToken = operatorToken;
+            this.Right = right;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.OperatorToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}OperatorToken: '${this.OperatorToken.Kind}'\n`;
+            result += `${GetIndent(indent + 1)}Left:\n`;
+            result += this.Left.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}Right:\n`;
+            result += this.Right.Print(indent + 2);
             return result;
         }
     }
