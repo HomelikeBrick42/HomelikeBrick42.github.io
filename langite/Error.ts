@@ -15,11 +15,11 @@ namespace Langite {
             this.Message = message;
         }
 
-        public GetLocation(): SourceLocation {
+        public override GetLocation(): SourceLocation {
             return this.Location;
         }
 
-        public GetMessage(): string {
+        public override GetMessage(): string {
             return `${this.Location}: ${this.Message}`;
         }
     }
@@ -34,12 +34,65 @@ namespace Langite {
             this.Character = character;
         }
 
-        public GetLocation(): SourceLocation {
+        public override GetLocation(): SourceLocation {
             return this.Location;
         }
 
-        public GetMessage(): string {
+        public override GetMessage(): string {
             return `${this.Location}: Error: Unexpected character '${this.Character}'`;
+        }
+    }
+
+    export class UnexpectedToken extends Error {
+        public Token: Token;
+
+        public constructor(token: Token) {
+            super();
+            this.Token = token;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.Token.Location;
+        }
+
+        public override GetMessage(): string {
+            return `${this.Token.Location}: Error: Unexpected token '${this.Token.Kind}'`;
+        }
+    }
+
+    export class ExpectedToken extends Error {
+        public ExpectedKind: TokenKind;
+        public GotToken: Token;
+
+        public constructor(expectedKind: TokenKind, gotToken: Token) {
+            super();
+            this.ExpectedKind = expectedKind;
+            this.GotToken = gotToken;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.GotToken.Location;
+        }
+
+        public override GetMessage(): string {
+            return `${this.GotToken.Location}: Error: Expected '${this.ExpectedKind}' but got '${this.GotToken.Kind}'`;
+        }
+    }
+
+    export class ExpectedNewline extends Error {
+        public GotToken: Token;
+
+        public constructor(gotToken: Token) {
+            super();
+            this.GotToken = gotToken;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.GotToken.Location;
+        }
+
+        public override GetMessage(): string {
+            return `${this.GotToken.Location}: Error: Expected a newline but got '${this.GotToken.Kind}'`;
         }
     }
 

@@ -1,4 +1,6 @@
 /// <reference path="./Lexer.ts"/>
+/// <reference path="./Ast.ts"/>
+/// <reference path="./Parser.ts"/>
 
 function PrintTokens(filepath: string, source: string): string {
     try {
@@ -22,12 +24,26 @@ function PrintTokens(filepath: string, source: string): string {
     }
 }
 
+function PrintAst(filepath: string, source: string): string {
+    try {
+        const parser = new Langite.Parser(filepath, source);
+        const file = parser.ParseFile();
+        return file.Print(0);
+    } catch (e) {
+        if (!(e instanceof Langite.Error)) {
+            throw e;
+        }
+        return e.GetMessage();
+    }
+}
+
 const SaveKey = "Langite";
 
 window.addEventListener('load', (): void => {
     const CodeInput = document.getElementById("code_input") as HTMLTextAreaElement;
     const Output = document.getElementById("output") as HTMLTextAreaElement;
     const ShowTokens = document.getElementById("show_tokens") as HTMLButtonElement;
+    const ShowAst = document.getElementById("show_ast") as HTMLButtonElement;
 
     const loadedData = window.localStorage.getItem(SaveKey);
     if (loadedData !== null) {
@@ -37,6 +53,12 @@ window.addEventListener('load', (): void => {
 
     ShowTokens.addEventListener('click', (): void => {
         Output.value = PrintTokens("unknown.langite", CodeInput.value);
+        ResizeTextArea(CodeInput);
+        ResizeTextArea(Output);
+    });
+
+    ShowAst.addEventListener('click', (): void => {
+        Output.value = PrintAst("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);
     });
