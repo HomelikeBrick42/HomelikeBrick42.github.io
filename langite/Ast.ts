@@ -5,8 +5,12 @@ namespace Langite {
 
     export enum AstKind {
         File = "File",
+        Scope = "Scope",
         Declaration = "Declaration",
         Name = "Name",
+        Integer = "Integer",
+        Float = "Float",
+        Function = "Function",
     }
 
     export abstract class Ast {
@@ -44,6 +48,33 @@ namespace Langite {
             location.Line = 1;
             location.Column = 1;
             return location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Statements:\n`;
+            this.Statements.forEach((statement) => {
+                result += statement.Print(indent + 2);
+            });
+            return result;
+        }
+    }
+
+    export class AstScope extends Ast {
+        public Kind = AstKind.Scope;
+        public OpenBraceToken: Token;
+        public Statements: Ast[];
+        public CloseBraceToken: Token;
+
+        public constructor(openBraceToken: Token, statements: Ast[], closeBraceToken: Token) {
+            super();
+            this.OpenBraceToken = openBraceToken;
+            this.Statements = statements;
+            this.CloseBraceToken = closeBraceToken;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.OpenBraceToken.Location;
         }
 
         public override Print(indent: number): string {
@@ -96,7 +127,6 @@ namespace Langite {
         }
     }
 
-
     export class AstName extends Ast {
         public Kind = AstKind.Name;
         public NameToken: Token;
@@ -113,6 +143,87 @@ namespace Langite {
         public override Print(indent: number): string {
             let result = PrintHeader(indent, this);
             result += `${GetIndent(indent + 1)}Value: '${this.NameToken.Value}'\n`;
+            return result;
+        }
+    }
+
+    export class AstInteger extends Ast {
+        public Kind = AstKind.Integer;
+        public IntegerToken: Token;
+
+        public constructor(integerToken: Token) {
+            super();
+            this.IntegerToken = integerToken;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.IntegerToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Value: '${this.IntegerToken.Value}'\n`;
+            return result;
+        }
+    }
+
+    export class AstFloat extends Ast {
+        public Kind = AstKind.Float;
+        public FloatToken: Token;
+
+        public constructor(floatToken: Token) {
+            super();
+            this.FloatToken = floatToken;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.FloatToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Value: '${this.FloatToken.Value}'\n`;
+            return result;
+        }
+    }
+
+    export class AstFunction extends Ast {
+        public Kind = AstKind.Function;
+        public FuncToken: Token;
+        public OpenParenthesisToken: Token;
+        public Parameters: AstDeclaration[];
+        public CloseParenthesisToken: Token;
+        public RightArrowToken: Token;
+        public ReturnType: Ast;
+        public Body: AstScope | null;
+
+        public constructor(funcToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstScope | null) {
+            super();
+            this.FuncToken = funcToken;
+            this.OpenParenthesisToken = openParenthesisToken;
+            this.Parameters = parameters;
+            this.CloseParenthesisToken = closeParenthesisToken;
+            this.RightArrowToken = rightArrowToken;
+            this.ReturnType = returnType;
+            this.Body = body;
+        }
+
+        public override GetLocation(): SourceLocation {
+            return this.FuncToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Parameters:\n`;
+            this.Parameters.forEach((parameter) => {
+                result += parameter.Print(indent + 2);
+            });
+            result += `${GetIndent(indent + 1)}Return Type:\n`;
+            this.ReturnType.Print(indent + 2);
+            if (this.Body !== null) {
+                result += `${GetIndent(indent + 1)}Body:\n`;
+                result += this.Body.Print(indent + 2);
+            }
             return result;
         }
     }

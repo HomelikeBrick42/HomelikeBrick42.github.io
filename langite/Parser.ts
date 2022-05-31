@@ -33,35 +33,88 @@ namespace Langite {
         }
 
         public ParseStatement(): Ast {
-            const expression = this.ParseExpression();
-            if (expression.Kind === AstKind.Name && this.Current.Kind === TokenKind.Colon) {
-                const name = expression as AstName;
-                const colonToken = this.ExpectToken(TokenKind.Colon);
+            switch (this.Current.Kind) {
+                case TokenKind.OpenBrace:
+                    return this.ParseScope();
 
-                let type: Ast | null = null;
-                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
-                if (this.Current.Kind !== TokenKind.Equal && this.Current.Kind !== TokenKind.Colon) {
-                    type = this.ParseExpression();
+                default: {
+                    const expression = this.ParseExpression();
+                    if (expression.Kind === AstKind.Name && this.Current.Kind === TokenKind.Colon) {
+                        const name = expression as AstName;
+                        const colonToken = this.ExpectToken(TokenKind.Colon);
+
+                        let type: Ast | null = null;
+                        // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                        if (this.Current.Kind !== TokenKind.Equal && this.Current.Kind !== TokenKind.Colon) {
+                            type = this.ParseExpression();
+                        }
+
+                        let colonOrEqualToken: Token | null = null;
+                        let value: Ast | null = null;
+                        // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                        if (this.Current.Kind === TokenKind.Equal || this.Current.Kind === TokenKind.Colon) {
+                            colonOrEqualToken = this.NextToken();
+                            value = this.ParseExpression();
+                        }
+
+                        return new AstDeclaration(name.NameToken, colonToken, type, colonOrEqualToken, value);
+                    }
+                    return expression;
                 }
-
-                let colonOrEqualToken: Token | null = null;
-                let value: Ast | null = null;
-                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
-                if (this.Current.Kind === TokenKind.Equal || this.Current.Kind === TokenKind.Colon) {
-                    colonOrEqualToken = this.NextToken();
-                    value = this.ParseExpression();
-                }
-
-                return new AstDeclaration(name.NameToken, colonToken, type, colonOrEqualToken, value);
             }
-            return expression;
         }
 
         public ParseExpression(): Ast {
+            return this.ParsePrimaryExpression();
+        }
+
+        public ParseLeastExpression(): Ast {
+            return this.ParsePrimaryExpression();
+        }
+
+        public ParsePrimaryExpression(): Ast {
             switch (this.Current.Kind) {
                 case TokenKind.Name: {
                     const name = this.ExpectToken(TokenKind.Name);
                     return new AstName(name);
+                }
+
+                case TokenKind.Integer: {
+                    const integer = this.ExpectToken(TokenKind.Integer);
+                    return new AstInteger(integer);
+                }
+
+                case TokenKind.Float: {
+                    const float = this.ExpectToken(TokenKind.Float);
+                    return new AstFloat(float);
+                }
+
+                case TokenKind.FuncKeyword: {
+                    const funcToken = this.ExpectToken(TokenKind.FuncKeyword);
+                    const openParenthesisToken = this.ExpectToken(TokenKind.OpenParenthesis);
+                    const parameters: AstDeclaration[] = [];
+                    this.AllowNewline();
+                    // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                    while (this.Current.Kind !== TokenKind.CloseParenthesis) {
+                        const nameToken = this.ExpectToken(TokenKind.Name);
+                        const colonToken = this.ExpectToken(TokenKind.Colon);
+                        const type = this.ParseExpression();
+                        parameters.push(new AstDeclaration(nameToken, colonToken, type, null, null));
+                        // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                        if (this.Current.Kind === TokenKind.CloseParenthesis)
+                            break;
+                        this.ExpectNewlineOrAndComma();
+                    }
+                    const closeParenthesisToken = this.ExpectToken(TokenKind.CloseParenthesis);
+                    const rightArrowToken = this.ExpectToken(TokenKind.RightArrow);
+                    this.AllowNewline();
+                    const returnType = this.ParseLeastExpression();
+                    let body: AstScope | null = null;
+                    // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                    if (this.Current.Kind === TokenKind.OpenBrace) {
+                        body = this.ParseScope();
+                    }
+                    return new AstFunction(funcToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body);
                 }
 
                 default: {
@@ -69,6 +122,23 @@ namespace Langite {
                     throw new UnexpectedToken(token);
                 }
             }
+        }
+
+        private ParseScope(): AstScope {
+            const openBraceToken = this.ExpectToken(TokenKind.OpenBrace);
+            const statements: Ast[] = [];
+            while (this.Current.Kind !== TokenKind.CloseBrace) {
+                this.AllowMultipleNewlines();
+
+                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                if (this.Current.Kind === TokenKind.EndOfFile)
+                    break;
+
+                statements.push(this.ParseStatement());
+                this.ExpectNewline();
+            }
+            const closeBraceToken = this.ExpectToken(TokenKind.CloseBrace);
+            return new AstScope(openBraceToken, statements, closeBraceToken);
         }
 
         private NextToken(): Token {
@@ -94,11 +164,19 @@ namespace Langite {
                 this.NextToken();
         }
 
+        private ExpectNewlineOrAndComma(): void {
+            const token = this.NextToken();
+            if (token.Kind === TokenKind.Comma)
+                this.AllowNewline();
+            else if (token.Kind !== TokenKind.Newline)
+                throw new ExpectedToken(TokenKind.Comma, token);
+        }
+
         private ExpectNewline(): Token {
             const token = this.NextToken();
-            if (this.Current.Kind !== TokenKind.Newline &&
-                this.Current.Kind !== TokenKind.EndOfFile &&
-                this.Current.Kind !== TokenKind.CloseBrace)
+            if (token.Kind !== TokenKind.Newline &&
+                token.Kind !== TokenKind.EndOfFile &&
+                token.Kind !== TokenKind.CloseBrace)
                 throw new ExpectedNewline(token);
             return token;
         }
