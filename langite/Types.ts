@@ -3,6 +3,7 @@
 namespace Langite {
 
     export enum TypeKind {
+        Void = "Void Type",
         Integer = "Integer Type",
         Float = "Float Type",
         Function = "Function Type",
@@ -17,6 +18,25 @@ namespace Langite {
 
     function PrintHeader(indent: number, type: Type): string {
         return `${GetIndent(indent)}- ${type.Kind}\n`;
+    }
+
+    export class TypeVoid extends Type {
+        public Kind = TypeKind.Void;
+
+        public constructor() {
+            super();
+        }
+
+        public IsEqual(other: Type): boolean {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
     }
 
     export class TypeInteger extends Type {

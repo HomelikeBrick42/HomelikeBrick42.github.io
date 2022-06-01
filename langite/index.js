@@ -69,6 +69,7 @@ var Langite;
 (function (Langite) {
     let TypeKind;
     (function (TypeKind) {
+        TypeKind["Void"] = "Void Type";
         TypeKind["Integer"] = "Integer Type";
         TypeKind["Float"] = "Float Type";
         TypeKind["Function"] = "Function Type";
@@ -80,6 +81,22 @@ var Langite;
     function PrintHeader(indent, type) {
         return `${Langite.GetIndent(indent)}- ${type.Kind}\n`;
     }
+    class TypeVoid extends Type {
+        constructor() {
+            super();
+            this.Kind = TypeKind.Void;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
+    }
+    Langite.TypeVoid = TypeVoid;
     class TypeInteger extends Type {
         constructor(signed) {
             super();
