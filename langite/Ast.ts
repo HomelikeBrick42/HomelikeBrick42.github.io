@@ -5,7 +5,7 @@ namespace Langite {
 
     export enum AstKind {
         File = "File",
-        Scope = "Scope",
+        Block = "Block",
         Declaration = "Declaration",
         Name = "Name",
         Integer = "Integer",
@@ -66,8 +66,8 @@ namespace Langite {
         }
     }
 
-    export class AstScope extends Ast {
-        public Kind = AstKind.Scope;
+    export class AstBlock extends Ast {
+        public Kind = AstKind.Block;
         public OpenBraceToken: Token;
         public Statements: Ast[];
         public CloseBraceToken: Token;
@@ -284,9 +284,9 @@ namespace Langite {
         public CloseParenthesisToken: Token;
         public RightArrowToken: Token;
         public ReturnType: Ast;
-        public Body: AstScope | null;
+        public Body: AstBlock | null;
 
-        public constructor(funcToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstScope | null) {
+        public constructor(funcToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstBlock | null) {
             super();
             this.FuncToken = funcToken;
             this.OpenParenthesisToken = openParenthesisToken;
@@ -325,9 +325,9 @@ namespace Langite {
         public CloseParenthesisToken: Token;
         public RightArrowToken: Token;
         public ReturnType: Ast;
-        public Body: AstScope | null;
+        public Body: AstBlock | null;
 
-        public constructor(procToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstScope | null) {
+        public constructor(procToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstBlock | null) {
             super();
             this.ProcToken = procToken;
             this.OpenParenthesisToken = openParenthesisToken;
@@ -387,11 +387,11 @@ namespace Langite {
         public Kind = AstKind.If;
         public IfToken: Token;
         public Condition: Ast;
-        public ThenStatement: AstScope;
+        public ThenStatement: AstBlock;
         public ElseToken: Token | null;
-        public ElseStatement: AstScope | AstIf | null;
+        public ElseStatement: AstBlock | AstIf | null;
 
-        public constructor(ifToken: Token, condition: Ast, thenStatement: AstScope, elseToken: Token | null, elseStatement: AstScope | AstIf | null) {
+        public constructor(ifToken: Token, condition: Ast, thenStatement: AstBlock, elseToken: Token | null, elseStatement: AstBlock | AstIf | null) {
             super();
             this.IfToken = ifToken;
             this.Condition = condition;

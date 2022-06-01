@@ -43,8 +43,8 @@ window.addEventListener('load', (): void => {
     const Example = document.getElementById("example") as HTMLButtonElement;
     const CodeInput = document.getElementById("code_input") as HTMLTextAreaElement;
     const Output = document.getElementById("output") as HTMLTextAreaElement;
-    const ShowTokens = document.getElementById("show_tokens") as HTMLButtonElement;
-    const ShowAst = document.getElementById("show_ast") as HTMLButtonElement;
+    const ShowTokensButton = document.getElementById("show_tokens") as HTMLButtonElement;
+    const ShowAstButton = document.getElementById("show_ast") as HTMLButtonElement;
 
     const loadedData = window.localStorage.getItem(SaveKey);
     if (loadedData !== null) {
@@ -76,13 +76,13 @@ main :: proc() -> void {
         ResizeTextArea(CodeInput);
     });
 
-    ShowTokens.addEventListener('click', (): void => {
+    ShowTokensButton.addEventListener('click', (): void => {
         Output.value = PrintTokens("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);
     });
 
-    ShowAst.addEventListener('click', (): void => {
+    ShowAstButton.addEventListener('click', (): void => {
         Output.value = PrintAst("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);

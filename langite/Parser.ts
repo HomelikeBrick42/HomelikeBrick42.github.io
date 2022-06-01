@@ -83,7 +83,7 @@ namespace Langite {
             }
         }
 
-        private ParseScope(): AstScope {
+        private ParseScope(): AstBlock {
             const openBraceToken = this.ExpectToken(TokenKind.OpenBrace);
             const statements: Ast[] = [];
             while (this.Current.Kind !== TokenKind.CloseBrace) {
@@ -97,7 +97,7 @@ namespace Langite {
                 this.ExpectNewline();
             }
             const closeBraceToken = this.ExpectToken(TokenKind.CloseBrace);
-            return new AstScope(openBraceToken, statements, closeBraceToken);
+            return new AstBlock(openBraceToken, statements, closeBraceToken);
         }
 
         private ParseIf(): AstIf {
@@ -105,7 +105,7 @@ namespace Langite {
             const condition = this.ParseExpression();
             const thenStatement = this.ParseScope();
             let elseToken: Token | null = null;
-            let elseStatement: AstScope | AstIf | null = null;
+            let elseStatement: AstBlock | AstIf | null = null;
             if (this.Current.Kind === TokenKind.ElseKeyword) {
                 elseToken = this.NextToken();
                 // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
@@ -246,7 +246,7 @@ namespace Langite {
                     const rightArrowToken = this.ExpectToken(TokenKind.RightArrow);
                     this.AllowNewline();
                     const returnType = this.ParseLeastExpression();
-                    let body: AstScope | null = null;
+                    let body: AstBlock | null = null;
                     // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
                     if (this.Current.Kind === TokenKind.OpenBrace) {
                         body = this.ParseScope();
@@ -274,7 +274,7 @@ namespace Langite {
                     const rightArrowToken = this.ExpectToken(TokenKind.RightArrow);
                     this.AllowNewline();
                     const returnType = this.ParseLeastExpression();
-                    let body: AstScope | null = null;
+                    let body: AstBlock | null = null;
                     // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
                     if (this.Current.Kind === TokenKind.OpenBrace) {
                         body = this.ParseScope();

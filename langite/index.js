@@ -70,7 +70,7 @@ var Langite;
     let AstKind;
     (function (AstKind) {
         AstKind["File"] = "File";
-        AstKind["Scope"] = "Scope";
+        AstKind["Block"] = "Block";
         AstKind["Declaration"] = "Declaration";
         AstKind["Name"] = "Name";
         AstKind["Integer"] = "Integer";
@@ -120,10 +120,10 @@ var Langite;
         }
     }
     Langite.AstFile = AstFile;
-    class AstScope extends Ast {
+    class AstBlock extends Ast {
         constructor(openBraceToken, statements, closeBraceToken) {
             super();
-            this.Kind = AstKind.Scope;
+            this.Kind = AstKind.Block;
             this.OpenBraceToken = openBraceToken;
             this.Statements = statements;
             this.CloseBraceToken = closeBraceToken;
@@ -140,7 +140,7 @@ var Langite;
             return result;
         }
     }
-    Langite.AstScope = AstScope;
+    Langite.AstBlock = AstBlock;
     class AstDeclaration extends Ast {
         constructor(nameToken, colonToken, type, colonOrEqualToken, value) {
             super();
@@ -643,7 +643,7 @@ var Langite;
                 this.ExpectNewline();
             }
             const closeBraceToken = this.ExpectToken(Langite.TokenKind.CloseBrace);
-            return new Langite.AstScope(openBraceToken, statements, closeBraceToken);
+            return new Langite.AstBlock(openBraceToken, statements, closeBraceToken);
         }
         ParseIf() {
             const ifToken = this.ExpectToken(Langite.TokenKind.IfKeyword);
@@ -892,8 +892,8 @@ window.addEventListener('load', () => {
     const Example = document.getElementById("example");
     const CodeInput = document.getElementById("code_input");
     const Output = document.getElementById("output");
-    const ShowTokens = document.getElementById("show_tokens");
-    const ShowAst = document.getElementById("show_ast");
+    const ShowTokensButton = document.getElementById("show_tokens");
+    const ShowAstButton = document.getElementById("show_ast");
     const loadedData = window.localStorage.getItem(SaveKey);
     if (loadedData !== null) {
         CodeInput.value = loadedData;
@@ -922,12 +922,12 @@ main :: proc() -> void {
 }`;
         ResizeTextArea(CodeInput);
     });
-    ShowTokens.addEventListener('click', () => {
+    ShowTokensButton.addEventListener('click', () => {
         Output.value = PrintTokens("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);
     });
-    ShowAst.addEventListener('click', () => {
+    ShowAstButton.addEventListener('click', () => {
         Output.value = PrintAst("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);
