@@ -833,6 +833,7 @@ function PrintAst(filepath, source) {
 }
 const SaveKey = "Langite";
 window.addEventListener('load', () => {
+    const Example = document.getElementById("example");
     const CodeInput = document.getElementById("code_input");
     const Output = document.getElementById("output");
     const ShowTokens = document.getElementById("show_tokens");
@@ -842,6 +843,19 @@ window.addEventListener('load', () => {
         CodeInput.value = loadedData;
         ResizeTextArea(CodeInput);
     }
+    Example.addEventListener('click', () => {
+        CodeInput.value = `foo :: func(a: int, b: int, c: int) -> int {
+    return a + b * c
+}
+
+factorial :: func(n: uint) -> uint {
+    if n <= 1 {
+        return n
+    }
+    return n * factorial(n - 1)
+}`;
+        ResizeTextArea(CodeInput);
+    });
     ShowTokens.addEventListener('click', () => {
         Output.value = PrintTokens("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);

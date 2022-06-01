@@ -40,6 +40,7 @@ function PrintAst(filepath: string, source: string): string {
 const SaveKey = "Langite";
 
 window.addEventListener('load', (): void => {
+    const Example = document.getElementById("example") as HTMLButtonElement;
     const CodeInput = document.getElementById("code_input") as HTMLTextAreaElement;
     const Output = document.getElementById("output") as HTMLTextAreaElement;
     const ShowTokens = document.getElementById("show_tokens") as HTMLButtonElement;
@@ -50,6 +51,20 @@ window.addEventListener('load', (): void => {
         CodeInput.value = loadedData;
         ResizeTextArea(CodeInput);
     }
+
+    Example.addEventListener('click', (): void => {
+        CodeInput.value = `foo :: func(a: int, b: int, c: int) -> int {
+    return a + b * c
+}
+
+factorial :: func(n: uint) -> uint {
+    if n <= 1 {
+        return n
+    }
+    return n * factorial(n - 1)
+}`;
+        ResizeTextArea(CodeInput);
+    });
 
     ShowTokens.addEventListener('click', (): void => {
         Output.value = PrintTokens("unknown.langite", CodeInput.value);
