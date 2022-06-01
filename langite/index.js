@@ -856,6 +856,93 @@ var Langite;
     }
     Langite.Parser = Parser;
 })(Langite || (Langite = {}));
+var Langite;
+(function (Langite) {
+    let TypeKind;
+    (function (TypeKind) {
+        TypeKind["Integer"] = "Integer";
+        TypeKind["Float"] = "Float";
+        TypeKind["Function"] = "Function";
+        TypeKind["Procedure"] = "Procedure";
+    })(TypeKind = Langite.TypeKind || (Langite.TypeKind = {}));
+    class Type {
+    }
+    Langite.Type = Type;
+    class TypeInteger extends Type {
+        constructor(signed) {
+            super();
+            this.Kind = TypeKind.Integer;
+            this.Signed = signed;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            const otherType = other;
+            if (this.Signed !== otherType.Signed)
+                return false;
+            return true;
+        }
+    }
+    Langite.TypeInteger = TypeInteger;
+    class TypeFloat extends Type {
+        constructor() {
+            super();
+            this.Kind = TypeKind.Float;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+    }
+    Langite.TypeFloat = TypeFloat;
+    class TypeFunction extends Type {
+        constructor(parameters, returnType) {
+            super();
+            this.Kind = TypeKind.Function;
+            this.Parameters = parameters;
+            this.ReturnType = returnType;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            const otherType = other;
+            if (!this.ReturnType.IsEqual(otherType.ReturnType))
+                return false;
+            if (this.Parameters.length !== otherType.Parameters.length)
+                return false;
+            for (let i = 0; i < this.Parameters.length; i++) {
+                if (!this.Parameters[i].IsEqual(otherType.Parameters[i]))
+                    return false;
+            }
+            return true;
+        }
+    }
+    Langite.TypeFunction = TypeFunction;
+    class TypeProcedure extends Type {
+        constructor(parameters, returnType) {
+            super();
+            this.Kind = TypeKind.Procedure;
+            this.Parameters = parameters;
+            this.ReturnType = returnType;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            const otherType = other;
+            if (!this.ReturnType.IsEqual(otherType.ReturnType))
+                return false;
+            if (this.Parameters.length !== otherType.Parameters.length)
+                return false;
+            for (let i = 0; i < this.Parameters.length; i++) {
+                if (!this.Parameters[i].IsEqual(otherType.Parameters[i]))
+                    return false;
+            }
+            return true;
+        }
+    }
+    Langite.TypeProcedure = TypeProcedure;
+})(Langite || (Langite = {}));
 function PrintTokens(filepath, source) {
     try {
         const lexer = new Langite.Lexer(filepath, source);
