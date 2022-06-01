@@ -404,28 +404,28 @@ var Langite;
     class Unimplemented extends Error {
         constructor(location, message) {
             super();
-            this.Location = location;
-            this.Message = message;
+            this.UnimplementedLocation = location;
+            this.UnimplementedMessage = message;
         }
-        GetLocation() {
-            return this.Location;
+        get Location() {
+            return this.UnimplementedLocation;
         }
-        GetMessage() {
-            return `${this.Location}: ${this.Message}`;
+        get Message() {
+            return `${this.UnimplementedLocation}: ${this.UnimplementedMessage}`;
         }
     }
     Langite.Unimplemented = Unimplemented;
     class UnexpectedCharacter extends Error {
-        constructor(location, character) {
+        constructor(characterLocation, character) {
             super();
-            this.Location = location;
+            this.CharacterLocation = characterLocation;
             this.Character = character;
         }
-        GetLocation() {
-            return this.Location;
+        get Location() {
+            return this.CharacterLocation;
         }
-        GetMessage() {
-            return `${this.Location}: Error: Unexpected character '${this.Character}'`;
+        get Message() {
+            return `${this.CharacterLocation}: Error: Unexpected character '${this.Character}'`;
         }
     }
     Langite.UnexpectedCharacter = UnexpectedCharacter;
@@ -434,10 +434,10 @@ var Langite;
             super();
             this.Token = token;
         }
-        GetLocation() {
+        get Location() {
             return this.Token.Location;
         }
-        GetMessage() {
+        get Message() {
             return `${this.Token.Location}: Error: Unexpected token '${this.Token.Kind}'`;
         }
     }
@@ -448,10 +448,10 @@ var Langite;
             this.ExpectedKind = expectedKind;
             this.GotToken = gotToken;
         }
-        GetLocation() {
+        get Location() {
             return this.GotToken.Location;
         }
-        GetMessage() {
+        get Message() {
             return `${this.GotToken.Location}: Error: Expected '${this.ExpectedKind}' but got '${this.GotToken.Kind}'`;
         }
     }
@@ -461,10 +461,10 @@ var Langite;
             super();
             this.GotToken = gotToken;
         }
-        GetLocation() {
+        get Location() {
             return this.GotToken.Location;
         }
-        GetMessage() {
+        get Message() {
             return `${this.GotToken.Location}: Error: Expected a newline but got '${this.GotToken.Kind}'`;
         }
     }
@@ -872,7 +872,7 @@ function PrintTokens(filepath, source) {
         if (!(e instanceof Langite.Error)) {
             throw e;
         }
-        return e.GetMessage();
+        return e.Message;
     }
 }
 function PrintAst(filepath, source) {
@@ -885,7 +885,7 @@ function PrintAst(filepath, source) {
         if (!(e instanceof Langite.Error)) {
             throw e;
         }
-        return e.GetMessage();
+        return e.Message;
     }
 }
 const SaveKey = "Langite";

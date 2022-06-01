@@ -1,45 +1,45 @@
 namespace Langite {
 
     export abstract class Error {
-        public abstract GetLocation(): SourceLocation;
-        public abstract GetMessage(): string;
+        public abstract get Location(): SourceLocation;
+        public abstract get Message(): string;
     }
 
     export class Unimplemented extends Error {
-        public Location: SourceLocation;
-        public Message: string;
+        public UnimplementedLocation: SourceLocation;
+        public UnimplementedMessage: string;
 
         public constructor(location: SourceLocation, message: string) {
             super();
-            this.Location = location;
-            this.Message = message;
+            this.UnimplementedLocation = location;
+            this.UnimplementedMessage = message;
         }
 
-        public override GetLocation(): SourceLocation {
-            return this.Location;
+        public override get Location(): SourceLocation {
+            return this.UnimplementedLocation;
         }
 
-        public override GetMessage(): string {
-            return `${this.Location}: ${this.Message}`;
+        public override get Message(): string {
+            return `${this.UnimplementedLocation}: ${this.UnimplementedMessage}`;
         }
     }
 
     export class UnexpectedCharacter extends Error {
-        public Location: SourceLocation;
+        public CharacterLocation: SourceLocation;
         public Character: char;
 
-        public constructor(location: SourceLocation, character: char) {
+        public constructor(characterLocation: SourceLocation, character: char) {
             super();
-            this.Location = location;
+            this.CharacterLocation = characterLocation;
             this.Character = character;
         }
 
-        public override GetLocation(): SourceLocation {
-            return this.Location;
+        public override get Location(): SourceLocation {
+            return this.CharacterLocation;
         }
 
-        public override GetMessage(): string {
-            return `${this.Location}: Error: Unexpected character '${this.Character}'`;
+        public override get Message(): string {
+            return `${this.CharacterLocation}: Error: Unexpected character '${this.Character}'`;
         }
     }
 
@@ -51,11 +51,11 @@ namespace Langite {
             this.Token = token;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.Token.Location;
         }
 
-        public override GetMessage(): string {
+        public override get Message(): string {
             return `${this.Token.Location}: Error: Unexpected token '${this.Token.Kind}'`;
         }
     }
@@ -70,11 +70,11 @@ namespace Langite {
             this.GotToken = gotToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.GotToken.Location;
         }
 
-        public override GetMessage(): string {
+        public override get Message(): string {
             return `${this.GotToken.Location}: Error: Expected '${this.ExpectedKind}' but got '${this.GotToken.Kind}'`;
         }
     }
@@ -87,11 +87,11 @@ namespace Langite {
             this.GotToken = gotToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.GotToken.Location;
         }
 
-        public override GetMessage(): string {
+        public override get Message(): string {
             return `${this.GotToken.Location}: Error: Expected a newline but got '${this.GotToken.Kind}'`;
         }
     }

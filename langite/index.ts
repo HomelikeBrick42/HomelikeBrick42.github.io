@@ -20,7 +20,7 @@ function PrintTokens(filepath: string, source: string): string {
         if (!(e instanceof Langite.Error)) {
             throw e;
         }
-        return e.GetMessage();
+        return e.Message;
     }
 }
 
@@ -33,7 +33,7 @@ function PrintAst(filepath: string, source: string): string {
         if (!(e instanceof Langite.Error)) {
             throw e;
         }
-        return e.GetMessage();
+        return e.Message;
     }
 }
 
