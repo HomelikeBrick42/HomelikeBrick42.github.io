@@ -121,6 +121,7 @@ namespace Langite {
         public override Print(indent: number): string {
             let result = PrintHeader(indent, this);
             result += `${GetIndent(indent + 1)}Name: '${this.NameToken.Value}'\n`;
+            result += `${GetIndent(indent + 1)}Constant: ${this.IsConstant}\n`;
             if (this.Type !== null) {
                 result += `${GetIndent(indent + 1)}Type:\n`;
                 result += this.Type.Print(indent + 2);
