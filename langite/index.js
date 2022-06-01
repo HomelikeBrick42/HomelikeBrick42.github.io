@@ -77,8 +77,10 @@ var Langite;
         AstKind["Float"] = "Float";
         AstKind["Unary"] = "Unary";
         AstKind["Binary"] = "Binary";
+        AstKind["Call"] = "Call";
         AstKind["Function"] = "Function";
         AstKind["Return"] = "Return";
+        AstKind["If"] = "If";
     })(AstKind = Langite.AstKind || (Langite.AstKind = {}));
     class Ast {
     }
@@ -100,7 +102,7 @@ var Langite;
             this.Statements = statements;
             this.EndOfFileToken = endOfFileToken;
         }
-        GetLocation() {
+        get Location() {
             const location = this.EndOfFileToken.Location.Clone();
             location.Position = 0;
             location.Line = 1;
@@ -125,7 +127,7 @@ var Langite;
             this.Statements = statements;
             this.CloseBraceToken = closeBraceToken;
         }
-        GetLocation() {
+        get Location() {
             return this.OpenBraceToken.Location;
         }
         Print(indent) {
@@ -151,7 +153,7 @@ var Langite;
         get IsConstant() {
             return this.ColonOrEqualToken !== null && this.ColonOrEqualToken.Kind == Langite.TokenKind.Colon;
         }
-        GetLocation() {
+        get Location() {
             return this.NameToken.Location;
         }
         Print(indent) {
@@ -175,7 +177,7 @@ var Langite;
             this.Kind = AstKind.Name;
             this.NameToken = nameToken;
         }
-        GetLocation() {
+        get Location() {
             return this.NameToken.Location;
         }
         Print(indent) {
@@ -191,7 +193,7 @@ var Langite;
             this.Kind = AstKind.Integer;
             this.IntegerToken = integerToken;
         }
-        GetLocation() {
+        get Location() {
             return this.IntegerToken.Location;
         }
         Print(indent) {
@@ -207,7 +209,7 @@ var Langite;
             this.Kind = AstKind.Float;
             this.FloatToken = floatToken;
         }
-        GetLocation() {
+        get Location() {
             return this.FloatToken.Location;
         }
         Print(indent) {
@@ -224,7 +226,7 @@ var Langite;
             this.OperatorToken = operatorToken;
             this.Operand = operand;
         }
-        GetLocation() {
+        get Location() {
             return this.OperatorToken.Location;
         }
         Print(indent) {
@@ -244,7 +246,7 @@ var Langite;
             this.OperatorToken = operatorToken;
             this.Right = right;
         }
-        GetLocation() {
+        get Location() {
             return this.OperatorToken.Location;
         }
         Print(indent) {
@@ -258,6 +260,30 @@ var Langite;
         }
     }
     Langite.AstBinary = AstBinary;
+    class AstCall extends Ast {
+        constructor(operand, openParenthesisToken, arguments_, closeParenthesisToken) {
+            super();
+            this.Kind = AstKind.Call;
+            this.Operand = operand;
+            this.OpenParenthesisToken = openParenthesisToken;
+            this.Arguments = arguments_;
+            this.CloseParenthesisToken = closeParenthesisToken;
+        }
+        get Location() {
+            return this.OpenParenthesisToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Operand:\n`;
+            result += this.Operand.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}Arguments:\n`;
+            this.Arguments.forEach((argument) => {
+                result += argument.Print(indent + 2);
+            });
+            return result;
+        }
+    }
+    Langite.AstCall = AstCall;
     class AstFunction extends Ast {
         constructor(funcToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body) {
             super();
@@ -270,7 +296,7 @@ var Langite;
             this.ReturnType = returnType;
             this.Body = body;
         }
-        GetLocation() {
+        get Location() {
             return this.FuncToken.Location;
         }
         Print(indent) {
@@ -296,7 +322,7 @@ var Langite;
             this.ReturnToken = returnToken;
             this.Value = value;
         }
-        GetLocation() {
+        get Location() {
             return this.ReturnToken.Location;
         }
         Print(indent) {
@@ -309,6 +335,33 @@ var Langite;
         }
     }
     Langite.AstReturn = AstReturn;
+    class AstIf extends Ast {
+        constructor(ifToken, condition, thenStatement, elseToken, elseStatement) {
+            super();
+            this.Kind = AstKind.If;
+            this.IfToken = ifToken;
+            this.Condition = condition;
+            this.ThenStatement = thenStatement;
+            this.ElseToken = elseToken;
+            this.ElseStatement = elseStatement;
+        }
+        get Location() {
+            return this.IfToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Condition:\n`;
+            result += this.Condition.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}ThenStatement:\n`;
+            result += this.ThenStatement.Print(indent + 2);
+            if (this.ElseStatement !== null) {
+                result += `${GetIndent(indent + 1)}ElseStatement:\n`;
+                result += this.ElseStatement.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+    Langite.AstIf = AstIf;
 })(Langite || (Langite = {}));
 var Langite;
 (function (Langite) {
@@ -513,6 +566,8 @@ var Langite;
             switch (this.Current.Kind) {
                 case Langite.TokenKind.OpenBrace:
                     return this.ParseScope();
+                case Langite.TokenKind.IfKeyword:
+                    return this.ParseIf();
                 case Langite.TokenKind.ReturnKeyword: {
                     const returnToken = this.ExpectToken(Langite.TokenKind.ReturnKeyword);
                     let value = null;
@@ -557,6 +612,23 @@ var Langite;
             }
             const closeBraceToken = this.ExpectToken(Langite.TokenKind.CloseBrace);
             return new Langite.AstScope(openBraceToken, statements, closeBraceToken);
+        }
+        ParseIf() {
+            const ifToken = this.ExpectToken(Langite.TokenKind.IfKeyword);
+            const condition = this.ParseExpression();
+            const thenStatement = this.ParseScope();
+            let elseToken = null;
+            let elseStatement = null;
+            if (this.Current.Kind === Langite.TokenKind.ElseKeyword) {
+                elseToken = this.NextToken();
+                if (this.Current.Kind === Langite.TokenKind.IfKeyword) {
+                    elseStatement = this.ParseIf();
+                }
+                else {
+                    elseStatement = this.ParseScope();
+                }
+            }
+            return new Langite.AstIf(ifToken, condition, thenStatement, elseToken, elseStatement);
         }
         ParseExpression() {
             return this.ParseBinaryExpression(0);
@@ -606,12 +678,33 @@ var Langite;
                 left = this.ParsePrimaryExpression();
             }
             while (true) {
-                const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
-                if (binaryPrecedence <= parentPrecedence)
-                    break;
-                const operatorToken = this.NextToken();
-                const right = this.ParseBinaryExpression(binaryPrecedence);
-                left = new Langite.AstBinary(left, operatorToken, right);
+                switch (this.Current.Kind) {
+                    case Langite.TokenKind.OpenParenthesis:
+                        {
+                            const openParenthesisToken = this.ExpectToken(Langite.TokenKind.OpenParenthesis);
+                            const arguments_ = [];
+                            while (this.Current.Kind !== Langite.TokenKind.CloseParenthesis) {
+                                arguments_.push(this.ParseExpression());
+                                if (this.Current.Kind === Langite.TokenKind.CloseParenthesis)
+                                    break;
+                                this.ExpectNewlineOrAndComma();
+                            }
+                            const closeParenthesisToken = this.ExpectToken(Langite.TokenKind.CloseParenthesis);
+                            left = new Langite.AstCall(left, openParenthesisToken, arguments_, closeParenthesisToken);
+                        }
+                        continue;
+                    default:
+                        {
+                            const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
+                            if (binaryPrecedence <= parentPrecedence)
+                                break;
+                            const operatorToken = this.NextToken();
+                            const right = this.ParseBinaryExpression(binaryPrecedence);
+                            left = new Langite.AstBinary(left, operatorToken, right);
+                        }
+                        continue;
+                }
+                break;
             }
             return left;
         }

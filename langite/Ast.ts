@@ -12,13 +12,15 @@ namespace Langite {
         Float = "Float",
         Unary = "Unary",
         Binary = "Binary",
+        Call = "Call",
         Function = "Function",
         Return = "Return",
+        If = "If",
     }
 
     export abstract class Ast {
         public abstract Kind: AstKind;
-        public abstract GetLocation(): SourceLocation;
+        public abstract get Location(): SourceLocation;
         public abstract Print(indent: number): string;
     }
 
@@ -45,7 +47,7 @@ namespace Langite {
             this.EndOfFileToken = endOfFileToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             const location = this.EndOfFileToken.Location.Clone();
             location.Position = 0;
             location.Line = 1;
@@ -76,7 +78,7 @@ namespace Langite {
             this.CloseBraceToken = closeBraceToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.OpenBraceToken.Location;
         }
 
@@ -111,7 +113,7 @@ namespace Langite {
             return this.ColonOrEqualToken !== null && this.ColonOrEqualToken.Kind == TokenKind.Colon;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.NameToken.Location;
         }
 
@@ -139,7 +141,7 @@ namespace Langite {
             this.NameToken = nameToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.NameToken.Location;
         }
 
@@ -159,7 +161,7 @@ namespace Langite {
             this.IntegerToken = integerToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.IntegerToken.Location;
         }
 
@@ -179,7 +181,7 @@ namespace Langite {
             this.FloatToken = floatToken;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.FloatToken.Location;
         }
 
@@ -201,7 +203,7 @@ namespace Langite {
             this.Operand = operand;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.OperatorToken.Location;
         }
 
@@ -227,7 +229,7 @@ namespace Langite {
             this.Right = right;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.OperatorToken.Location;
         }
 
@@ -238,6 +240,37 @@ namespace Langite {
             result += this.Left.Print(indent + 2);
             result += `${GetIndent(indent + 1)}Right:\n`;
             result += this.Right.Print(indent + 2);
+            return result;
+        }
+    }
+
+    export class AstCall extends Ast {
+        public Kind = AstKind.Call;
+        public Operand: Ast;
+        public OpenParenthesisToken: Token;
+        public Arguments: Ast[];
+        public CloseParenthesisToken: Token;
+
+        public constructor(operand: Ast, openParenthesisToken: Token, arguments_: Ast[], closeParenthesisToken: Token) {
+            super();
+            this.Operand = operand;
+            this.OpenParenthesisToken = openParenthesisToken;
+            this.Arguments = arguments_;
+            this.CloseParenthesisToken = closeParenthesisToken;
+        }
+
+        public override get Location(): SourceLocation {
+            return this.OpenParenthesisToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Operand:\n`;
+            result += this.Operand.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}Arguments:\n`;
+            this.Arguments.forEach((argument) => {
+                result += argument.Print(indent + 2);
+            });
             return result;
         }
     }
@@ -263,7 +296,7 @@ namespace Langite {
             this.Body = body;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.FuncToken.Location;
         }
 
@@ -294,7 +327,7 @@ namespace Langite {
             this.Value = value;
         }
 
-        public override GetLocation(): SourceLocation {
+        public override get Location(): SourceLocation {
             return this.ReturnToken.Location;
         }
 
@@ -303,6 +336,41 @@ namespace Langite {
             if (this.Value !== null) {
                 result += `${GetIndent(indent + 1)}Value:\n`;
                 result += this.Value.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+
+    export class AstIf extends Ast {
+        public Kind = AstKind.If;
+        public IfToken: Token;
+        public Condition: Ast;
+        public ThenStatement: AstScope;
+        public ElseToken: Token | null;
+        public ElseStatement: AstScope | AstIf | null;
+
+        public constructor(ifToken: Token, condition: Ast, thenStatement: AstScope, elseToken: Token | null, elseStatement: AstScope | AstIf | null) {
+            super();
+            this.IfToken = ifToken;
+            this.Condition = condition;
+            this.ThenStatement = thenStatement;
+            this.ElseToken = elseToken;
+            this.ElseStatement = elseStatement;
+        }
+
+        public override get Location(): SourceLocation {
+            return this.IfToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Condition:\n`;
+            result += this.Condition.Print(indent + 2);
+            result += `${GetIndent(indent + 1)}ThenStatement:\n`;
+            result += this.ThenStatement.Print(indent + 2);
+            if (this.ElseStatement !== null) {
+                result += `${GetIndent(indent + 1)}ElseStatement:\n`;
+                result += this.ElseStatement.Print(indent + 2);
             }
             return result;
         }

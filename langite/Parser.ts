@@ -37,6 +37,9 @@ namespace Langite {
                 case TokenKind.OpenBrace:
                     return this.ParseScope();
 
+                case TokenKind.IfKeyword:
+                    return this.ParseIf();
+
                 case TokenKind.ReturnKeyword: {
                     const returnToken = this.ExpectToken(TokenKind.ReturnKeyword);
                     let value: Ast | null = null;
@@ -97,6 +100,24 @@ namespace Langite {
             return new AstScope(openBraceToken, statements, closeBraceToken);
         }
 
+        private ParseIf(): AstIf {
+            const ifToken = this.ExpectToken(TokenKind.IfKeyword);
+            const condition = this.ParseExpression();
+            const thenStatement = this.ParseScope();
+            let elseToken: Token | null = null;
+            let elseStatement: AstScope | AstIf | null = null;
+            if (this.Current.Kind === TokenKind.ElseKeyword) {
+                elseToken = this.NextToken();
+                // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                if (this.Current.Kind === TokenKind.IfKeyword) {
+                    elseStatement = this.ParseIf();
+                } else {
+                    elseStatement = this.ParseScope();
+                }
+            }
+            return new AstIf(ifToken, condition, thenStatement, elseToken, elseStatement);
+        }
+
         public ParseExpression(): Ast {
             return this.ParseBinaryExpression(0);
         }
@@ -149,13 +170,33 @@ namespace Langite {
             }
 
             while (true) {
-                const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
-                if (binaryPrecedence <= parentPrecedence)
-                    break;
+                switch (this.Current.Kind) {
+                    case TokenKind.OpenParenthesis: {
+                        const openParenthesisToken = this.ExpectToken(TokenKind.OpenParenthesis);
+                        const arguments_: Ast[] = [];
+                        // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                        while (this.Current.Kind !== TokenKind.CloseParenthesis) {
+                            arguments_.push(this.ParseExpression());
+                            // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                            if (this.Current.Kind === TokenKind.CloseParenthesis)
+                                break;
+                            this.ExpectNewlineOrAndComma();
+                        }
+                        const closeParenthesisToken = this.ExpectToken(TokenKind.CloseParenthesis);
+                        left = new AstCall(left, openParenthesisToken, arguments_, closeParenthesisToken);
+                    } continue;
 
-                const operatorToken = this.NextToken();
-                const right = this.ParseBinaryExpression(binaryPrecedence);
-                left = new AstBinary(left, operatorToken, right);
+                    default: {
+                        const binaryPrecedence = GetBinaryOperatorPrecedence(this.Current.Kind);
+                        if (binaryPrecedence <= parentPrecedence)
+                            break;
+
+                        const operatorToken = this.NextToken();
+                        const right = this.ParseBinaryExpression(binaryPrecedence);
+                        left = new AstBinary(left, operatorToken, right);
+                    } continue;
+                }
+                break;
             }
 
             return left;
