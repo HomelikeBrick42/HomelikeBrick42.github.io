@@ -94,7 +94,10 @@ var Langite;
         return result;
     }
     function PrintHeader(indent, ast) {
-        return `${GetIndent(indent)}- ${ast.Kind}\n`;
+        let result = "";
+        result += `${GetIndent(indent)}- ${ast.Kind}\n`;
+        result += `${GetIndent(indent + 1)}Location: ${ast.Location}\n`;
+        return result;
     }
     class AstFile extends Ast {
         constructor(statements, endOfFileToken) {

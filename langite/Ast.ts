@@ -34,7 +34,10 @@ namespace Langite {
     }
 
     function PrintHeader(indent: number, ast: Ast): string {
-        return `${GetIndent(indent)}- ${ast.Kind}\n`;
+        let result = "";
+        result += `${GetIndent(indent)}- ${ast.Kind}\n`;
+        result += `${GetIndent(indent + 1)}Location: ${ast.Location}\n`;
+        return result;
     }
 
     export class AstFile extends Ast {
