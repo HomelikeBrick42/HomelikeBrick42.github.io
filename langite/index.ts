@@ -37,6 +37,19 @@ function PrintAst(filepath: string, source: string): string {
     }
 }
 
+function CheckAst(filepath: string, source: string): string {
+    try {
+        const parser = new Langite.Parser(filepath, source);
+        const file = parser.ParseFile();
+        return file.Print(0);
+    } catch (e) {
+        if (!(e instanceof Langite.Error)) {
+            throw e;
+        }
+        return e.Message;
+    }
+}
+
 const SaveKey = "Langite";
 
 window.addEventListener('load', (): void => {
@@ -45,6 +58,7 @@ window.addEventListener('load', (): void => {
     const Output = document.getElementById("output") as HTMLTextAreaElement;
     const ShowTokensButton = document.getElementById("show_tokens") as HTMLButtonElement;
     const ShowAstButton = document.getElementById("show_ast") as HTMLButtonElement;
+    const CheckAstButton = document.getElementById("check_ast") as HTMLButtonElement;
 
     const loadedData = window.localStorage.getItem(SaveKey);
     if (loadedData !== null) {
@@ -84,6 +98,12 @@ main :: proc() -> void {
 
     ShowAstButton.addEventListener('click', (): void => {
         Output.value = PrintAst("unknown.langite", CodeInput.value);
+        ResizeTextArea(CodeInput);
+        ResizeTextArea(Output);
+    });
+
+    CheckAstButton.addEventListener('click', (): void => {
+        Output.value = CheckAst("unknown.langite", CodeInput.value);
         ResizeTextArea(CodeInput);
         ResizeTextArea(Output);
     });

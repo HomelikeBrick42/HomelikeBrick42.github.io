@@ -1,15 +1,22 @@
+/// <reference path="Ast.ts"/>
+
 namespace Langite {
 
     export enum TypeKind {
-        Integer = "Integer",
-        Float = "Float",
-        Function = "Function",
-        Procedure = "Procedure",
+        Integer = "Integer Type",
+        Float = "Float Type",
+        Function = "Function Type",
+        Procedure = "Procedure Type",
     }
 
     export abstract class Type {
         public abstract Kind: TypeKind;
         public abstract IsEqual(other: Type): boolean;
+        public abstract Print(indent: number): string;
+    }
+
+    function PrintHeader(indent: number, type: Type): string {
+        return `${GetIndent(indent)}- ${type.Kind}\n`;
     }
 
     export class TypeInteger extends Type {
@@ -29,6 +36,12 @@ namespace Langite {
                 return false;
             return true;
         }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Signed: ${this.Signed}\n`;
+            return result;
+        }
     }
 
     export class TypeFloat extends Type {
@@ -42,6 +55,11 @@ namespace Langite {
             if (other.Kind !== this.Kind)
                 return false;
             return true;
+        }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            return result;
         }
     }
 
@@ -70,6 +88,17 @@ namespace Langite {
             }
             return true;
         }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Parameters:\n`;
+            this.Parameters.forEach((parameter) => {
+                result += parameter.Print(indent + 2);
+            });
+            result += `${GetIndent(indent + 1)}Return Type:`;
+            result += this.ReturnType.Print(indent + 2);
+            return result;
+        }
     }
 
     export class TypeProcedure extends Type {
@@ -96,6 +125,17 @@ namespace Langite {
                     return false;
             }
             return true;
+        }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Parameters:\n`;
+            this.Parameters.forEach((parameter) => {
+                result += parameter.Print(indent + 2);
+            });
+            result += `${GetIndent(indent + 1)}Return Type:`;
+            result += this.ReturnType.Print(indent + 2);
+            return result;
         }
     }
 

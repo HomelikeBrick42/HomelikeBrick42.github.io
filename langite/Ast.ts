@@ -1,5 +1,6 @@
 /// <reference path="./SourceLocation.ts"/>
 /// <reference path="./Token.ts"/>
+/// <reference path="./Types.ts"/>
 
 namespace Langite {
 
@@ -21,11 +22,12 @@ namespace Langite {
 
     export abstract class Ast {
         public abstract Kind: AstKind;
+        public ResolvedType: Type | null = null;
         public abstract get Location(): SourceLocation;
         public abstract Print(indent: number): string;
     }
 
-    function GetIndent(indent: number): string {
+    export function GetIndent(indent: number): string {
         let result = "";
         for (let i = 0; i < indent; i++) {
             result += "  ";
@@ -37,6 +39,10 @@ namespace Langite {
         let result = "";
         result += `${GetIndent(indent)}- ${ast.Kind}\n`;
         result += `${GetIndent(indent + 1)}Location: ${ast.Location}\n`;
+        if (ast.ResolvedType !== null) {
+            result += `${GetIndent(indent + 1)}Type:\n`;
+            result += ast.ResolvedType.Print(indent + 2);
+        }
         return result;
     }
 
