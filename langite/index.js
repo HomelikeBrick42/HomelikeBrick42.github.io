@@ -79,6 +79,7 @@ var Langite;
         AstKind["Binary"] = "Binary";
         AstKind["Call"] = "Call";
         AstKind["Function"] = "Function";
+        AstKind["Procedure"] = "Procedure";
         AstKind["Return"] = "Return";
         AstKind["If"] = "If";
     })(AstKind = Langite.AstKind || (Langite.AstKind = {}));
@@ -315,6 +316,37 @@ var Langite;
         }
     }
     Langite.AstFunction = AstFunction;
+    class AstProcedure extends Ast {
+        constructor(procToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body) {
+            super();
+            this.Kind = AstKind.Procedure;
+            this.ProcToken = procToken;
+            this.OpenParenthesisToken = openParenthesisToken;
+            this.Parameters = parameters;
+            this.CloseParenthesisToken = closeParenthesisToken;
+            this.RightArrowToken = rightArrowToken;
+            this.ReturnType = returnType;
+            this.Body = body;
+        }
+        get Location() {
+            return this.ProcToken.Location;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Parameters:\n`;
+            this.Parameters.forEach((parameter) => {
+                result += parameter.Print(indent + 2);
+            });
+            result += `${GetIndent(indent + 1)}Return Type:\n`;
+            this.ReturnType.Print(indent + 2);
+            if (this.Body !== null) {
+                result += `${GetIndent(indent + 1)}Body:\n`;
+                result += this.Body.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+    Langite.AstProcedure = AstProcedure;
     class AstReturn extends Ast {
         constructor(returnToken, value) {
             super();
@@ -752,6 +784,30 @@ var Langite;
                     }
                     return new Langite.AstFunction(funcToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body);
                 }
+                case Langite.TokenKind.ProcKeyword: {
+                    const procToken = this.ExpectToken(Langite.TokenKind.ProcKeyword);
+                    const openParenthesisToken = this.ExpectToken(Langite.TokenKind.OpenParenthesis);
+                    const parameters = [];
+                    this.AllowNewline();
+                    while (this.Current.Kind !== Langite.TokenKind.CloseParenthesis) {
+                        const nameToken = this.ExpectToken(Langite.TokenKind.Name);
+                        const colonToken = this.ExpectToken(Langite.TokenKind.Colon);
+                        const type = this.ParseExpression();
+                        parameters.push(new Langite.AstDeclaration(nameToken, colonToken, type, null, null));
+                        if (this.Current.Kind === Langite.TokenKind.CloseParenthesis)
+                            break;
+                        this.ExpectNewlineOrAndComma();
+                    }
+                    const closeParenthesisToken = this.ExpectToken(Langite.TokenKind.CloseParenthesis);
+                    const rightArrowToken = this.ExpectToken(Langite.TokenKind.RightArrow);
+                    this.AllowNewline();
+                    const returnType = this.ParseLeastExpression();
+                    let body = null;
+                    if (this.Current.Kind === Langite.TokenKind.OpenBrace) {
+                        body = this.ParseScope();
+                    }
+                    return new Langite.AstProcedure(procToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body);
+                }
                 default: {
                     const token = this.NextToken();
                     throw new Langite.UnexpectedToken(token);
@@ -853,6 +909,16 @@ factorial :: func(n: uint) -> uint {
         return n
     }
     return n * factorial(n - 1)
+}
+
+main :: proc() -> void {
+    a := foo(1, 2, 3)
+    print_int(a)
+    println()
+
+    fact_6 := factorial(6)
+    print_uint(fact_6)
+    println()
 }`;
         ResizeTextArea(CodeInput);
     });

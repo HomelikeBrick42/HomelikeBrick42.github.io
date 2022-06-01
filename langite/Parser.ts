@@ -254,6 +254,34 @@ namespace Langite {
                     return new AstFunction(funcToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body);
                 }
 
+                case TokenKind.ProcKeyword: {
+                    const procToken = this.ExpectToken(TokenKind.ProcKeyword);
+                    const openParenthesisToken = this.ExpectToken(TokenKind.OpenParenthesis);
+                    const parameters: AstDeclaration[] = [];
+                    this.AllowNewline();
+                    // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                    while (this.Current.Kind !== TokenKind.CloseParenthesis) {
+                        const nameToken = this.ExpectToken(TokenKind.Name);
+                        const colonToken = this.ExpectToken(TokenKind.Colon);
+                        const type = this.ParseExpression();
+                        parameters.push(new AstDeclaration(nameToken, colonToken, type, null, null));
+                        // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                        if (this.Current.Kind === TokenKind.CloseParenthesis)
+                            break;
+                        this.ExpectNewlineOrAndComma();
+                    }
+                    const closeParenthesisToken = this.ExpectToken(TokenKind.CloseParenthesis);
+                    const rightArrowToken = this.ExpectToken(TokenKind.RightArrow);
+                    this.AllowNewline();
+                    const returnType = this.ParseLeastExpression();
+                    let body: AstScope | null = null;
+                    // @ts-ignore: again the compiler being dumb and not checking for side effects inside member functions
+                    if (this.Current.Kind === TokenKind.OpenBrace) {
+                        body = this.ParseScope();
+                    }
+                    return new AstProcedure(procToken, openParenthesisToken, parameters, closeParenthesisToken, rightArrowToken, returnType, body);
+                }
+
                 default: {
                     const token = this.NextToken();
                     throw new UnexpectedToken(token);

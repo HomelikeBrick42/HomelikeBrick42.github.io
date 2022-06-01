@@ -14,6 +14,7 @@ namespace Langite {
         Binary = "Binary",
         Call = "Call",
         Function = "Function",
+        Procedure = "Procedure",
         Return = "Return",
         If = "If",
     }
@@ -298,6 +299,47 @@ namespace Langite {
 
         public override get Location(): SourceLocation {
             return this.FuncToken.Location;
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Parameters:\n`;
+            this.Parameters.forEach((parameter) => {
+                result += parameter.Print(indent + 2);
+            });
+            result += `${GetIndent(indent + 1)}Return Type:\n`;
+            this.ReturnType.Print(indent + 2);
+            if (this.Body !== null) {
+                result += `${GetIndent(indent + 1)}Body:\n`;
+                result += this.Body.Print(indent + 2);
+            }
+            return result;
+        }
+    }
+
+    export class AstProcedure extends Ast {
+        public Kind = AstKind.Procedure;
+        public ProcToken: Token;
+        public OpenParenthesisToken: Token;
+        public Parameters: AstDeclaration[];
+        public CloseParenthesisToken: Token;
+        public RightArrowToken: Token;
+        public ReturnType: Ast;
+        public Body: AstScope | null;
+
+        public constructor(procToken: Token, openParenthesisToken: Token, parameters: AstDeclaration[], closeParenthesisToken: Token, rightArrowToken: Token, returnType: Ast, body: AstScope | null) {
+            super();
+            this.ProcToken = procToken;
+            this.OpenParenthesisToken = openParenthesisToken;
+            this.Parameters = parameters;
+            this.CloseParenthesisToken = closeParenthesisToken;
+            this.RightArrowToken = rightArrowToken;
+            this.ReturnType = returnType;
+            this.Body = body;
+        }
+
+        public override get Location(): SourceLocation {
+            return this.ProcToken.Location;
         }
 
         public override Print(indent: number): string {

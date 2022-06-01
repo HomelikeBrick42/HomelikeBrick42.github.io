@@ -62,6 +62,16 @@ factorial :: func(n: uint) -> uint {
         return n
     }
     return n * factorial(n - 1)
+}
+
+main :: proc() -> void {
+    a := foo(1, 2, 3)
+    print_int(a)
+    println()
+
+    fact_6 := factorial(6)
+    print_uint(fact_6)
+    println()
 }`;
         ResizeTextArea(CodeInput);
     });
