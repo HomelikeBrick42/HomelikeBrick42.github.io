@@ -218,6 +218,7 @@ var Langite;
         AstKind["Procedure"] = "Procedure";
         AstKind["Return"] = "Return";
         AstKind["If"] = "If";
+        AstKind["Builtin"] = "Builtin";
     })(AstKind = Langite.AstKind || (Langite.AstKind = {}));
     class Ast {
         constructor() {
@@ -546,6 +547,25 @@ var Langite;
         }
     }
     Langite.AstIf = AstIf;
+    let AstBuiltinKind;
+    (function (AstBuiltinKind) {
+    })(AstBuiltinKind = Langite.AstBuiltinKind || (Langite.AstBuiltinKind = {}));
+    class AstBuiltin extends Ast {
+        constructor(builtinKind) {
+            super();
+            this.Kind = AstKind.Builtin;
+            this.BuiltinKind = builtinKind;
+        }
+        get Location() {
+            return new Langite.SourceLocation("builtin.langite", "", 0, 1, 1);
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Builtin Kind: ${this.BuiltinKind}\n`;
+            return result;
+        }
+    }
+    Langite.AstBuiltin = AstBuiltin;
 })(Langite || (Langite = {}));
 var Langite;
 (function (Langite) {

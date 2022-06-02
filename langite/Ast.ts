@@ -18,6 +18,7 @@ namespace Langite {
         Procedure = "Procedure",
         Return = "Return",
         If = "If",
+        Builtin = "Builtin",
     }
 
     export abstract class Ast {
@@ -428,6 +429,29 @@ namespace Langite {
                 result += `${GetIndent(indent + 1)}ElseStatement:\n`;
                 result += this.ElseStatement.Print(indent + 2);
             }
+            return result;
+        }
+    }
+
+    export enum AstBuiltinKind {
+    }
+
+    export class AstBuiltin extends Ast {
+        public Kind = AstKind.Builtin;
+        public BuiltinKind: AstBuiltinKind;
+
+        public constructor(builtinKind: AstBuiltinKind) {
+            super();
+            this.BuiltinKind = builtinKind;
+        }
+
+        public override get Location(): SourceLocation {
+            return new SourceLocation("builtin.langite", "", 0, 1, 1);
+        }
+
+        public override Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            result += `${GetIndent(indent + 1)}Builtin Kind: ${this.BuiltinKind}\n`;
             return result;
         }
     }
