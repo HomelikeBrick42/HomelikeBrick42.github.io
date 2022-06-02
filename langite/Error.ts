@@ -113,4 +113,21 @@ namespace Langite {
         }
     }
 
+    export class ExpectedConstant extends Error {
+        public Ast: Ast;
+
+        public constructor(ast: Ast) {
+            super();
+            this.Ast = ast;
+        }
+
+        public override get Location(): SourceLocation {
+            return this.Ast.Location;
+        }
+
+        public override get Message(): string {
+            return `${this.Ast.Location}: Error: Expected '${this.Ast.Kind}' to be a constant`;
+        }
+    }
+
 }

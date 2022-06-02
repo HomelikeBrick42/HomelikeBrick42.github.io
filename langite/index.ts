@@ -1,6 +1,8 @@
 /// <reference path="./Lexer.ts"/>
 /// <reference path="./Ast.ts"/>
 /// <reference path="./Parser.ts"/>
+/// <reference path="./NameResolver.ts"/>
+/// <reference path="./TypeResolver.ts"/>
 
 function PrintTokens(filepath: string, source: string): string {
     try {
@@ -43,6 +45,8 @@ function CheckAst(filepath: string, source: string): string {
         const file = parser.ParseFile();
         Langite.ResolveNames(file, [{}], [{
             "void": Langite.AstBuiltin.CreateConstDeclaration("void", Langite.AstBuiltinKind.Void),
+            "type": Langite.AstBuiltin.CreateConstDeclaration("type", Langite.AstBuiltinKind.Type),
+            "bool": Langite.AstBuiltin.CreateConstDeclaration("bool", Langite.AstBuiltinKind.Bool),
             "int": Langite.AstBuiltin.CreateConstDeclaration("int", Langite.AstBuiltinKind.Int),
             "uint": Langite.AstBuiltin.CreateConstDeclaration("uint", Langite.AstBuiltinKind.UInt),
             "float": Langite.AstBuiltin.CreateConstDeclaration("float", Langite.AstBuiltinKind.Float),
@@ -50,6 +54,7 @@ function CheckAst(filepath: string, source: string): string {
             "print_uint": Langite.AstBuiltin.CreateConstDeclaration("print_uint", Langite.AstBuiltinKind.PrintUInt),
             "println": Langite.AstBuiltin.CreateConstDeclaration("println", Langite.AstBuiltinKind.Println),
         }], 1);
+        Langite.ResolveTypes(file, null);
         return file.Print(0);
     } catch (e) {
         if (!(e instanceof Langite.Error)) {

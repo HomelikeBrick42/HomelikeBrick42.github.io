@@ -435,6 +435,8 @@ namespace Langite {
 
     export enum AstBuiltinKind {
         Void,
+        Type,
+        Bool,
         Int,
         UInt,
         Float,

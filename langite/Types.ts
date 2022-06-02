@@ -4,6 +4,8 @@ namespace Langite {
 
     export enum TypeKind {
         Void = "Void Type",
+        Type = "Type Type",
+        Bool = "Bool Type",
         Integer = "Integer Type",
         Float = "Float Type",
         Function = "Function Type",
@@ -22,6 +24,44 @@ namespace Langite {
 
     export class TypeVoid extends Type {
         public Kind = TypeKind.Void;
+
+        public constructor() {
+            super();
+        }
+
+        public IsEqual(other: Type): boolean {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
+    }
+
+    export class TypeType extends Type {
+        public Kind = TypeKind.Type;
+
+        public constructor() {
+            super();
+        }
+
+        public IsEqual(other: Type): boolean {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+
+        public Print(indent: number): string {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
+    }
+
+    export class TypeBool extends Type {
+        public Kind = TypeKind.Bool;
 
         public constructor() {
             super();

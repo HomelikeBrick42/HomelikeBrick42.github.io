@@ -70,6 +70,8 @@ var Langite;
     let TypeKind;
     (function (TypeKind) {
         TypeKind["Void"] = "Void Type";
+        TypeKind["Type"] = "Type Type";
+        TypeKind["Bool"] = "Bool Type";
         TypeKind["Integer"] = "Integer Type";
         TypeKind["Float"] = "Float Type";
         TypeKind["Function"] = "Function Type";
@@ -97,6 +99,38 @@ var Langite;
         }
     }
     Langite.TypeVoid = TypeVoid;
+    class TypeType extends Type {
+        constructor() {
+            super();
+            this.Kind = TypeKind.Type;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
+    }
+    Langite.TypeType = TypeType;
+    class TypeBool extends Type {
+        constructor() {
+            super();
+            this.Kind = TypeKind.Bool;
+        }
+        IsEqual(other) {
+            if (other.Kind !== this.Kind)
+                return false;
+            return true;
+        }
+        Print(indent) {
+            let result = PrintHeader(indent, this);
+            return result;
+        }
+    }
+    Langite.TypeBool = TypeBool;
     class TypeInteger extends Type {
         constructor(signed) {
             super();
@@ -550,12 +584,14 @@ var Langite;
     let AstBuiltinKind;
     (function (AstBuiltinKind) {
         AstBuiltinKind[AstBuiltinKind["Void"] = 0] = "Void";
-        AstBuiltinKind[AstBuiltinKind["Int"] = 1] = "Int";
-        AstBuiltinKind[AstBuiltinKind["UInt"] = 2] = "UInt";
-        AstBuiltinKind[AstBuiltinKind["Float"] = 3] = "Float";
-        AstBuiltinKind[AstBuiltinKind["PrintInt"] = 4] = "PrintInt";
-        AstBuiltinKind[AstBuiltinKind["PrintUInt"] = 5] = "PrintUInt";
-        AstBuiltinKind[AstBuiltinKind["Println"] = 6] = "Println";
+        AstBuiltinKind[AstBuiltinKind["Type"] = 1] = "Type";
+        AstBuiltinKind[AstBuiltinKind["Bool"] = 2] = "Bool";
+        AstBuiltinKind[AstBuiltinKind["Int"] = 3] = "Int";
+        AstBuiltinKind[AstBuiltinKind["UInt"] = 4] = "UInt";
+        AstBuiltinKind[AstBuiltinKind["Float"] = 5] = "Float";
+        AstBuiltinKind[AstBuiltinKind["PrintInt"] = 6] = "PrintInt";
+        AstBuiltinKind[AstBuiltinKind["PrintUInt"] = 7] = "PrintUInt";
+        AstBuiltinKind[AstBuiltinKind["Println"] = 8] = "Println";
     })(AstBuiltinKind = Langite.AstBuiltinKind || (Langite.AstBuiltinKind = {}));
     class AstBuiltin extends Ast {
         constructor(builtinKind) {
@@ -665,6 +701,19 @@ var Langite;
         }
     }
     Langite.NameNotFound = NameNotFound;
+    class ExpectedConstant extends Error {
+        constructor(ast) {
+            super();
+            this.Ast = ast;
+        }
+        get Location() {
+            return this.Ast.Location;
+        }
+        get Message() {
+            return `${this.Ast.Location}: Error: Expected '${this.Ast.Kind}' to be a constant`;
+        }
+    }
+    Langite.ExpectedConstant = ExpectedConstant;
 })(Langite || (Langite = {}));
 var Langite;
 (function (Langite) {
@@ -1201,6 +1250,285 @@ var Langite;
     }
     Langite.Parser = Parser;
 })(Langite || (Langite = {}));
+var Langite;
+(function (Langite) {
+    function EvalType(ast) {
+        var _a;
+        switch (ast.Kind) {
+            case Langite.AstKind.Name: {
+                const name = ast;
+                return EvalType((_a = name.ResolvedDeclaration) === null || _a === void 0 ? void 0 : _a.Value);
+            }
+            case Langite.AstKind.Builtin: {
+                const builtin = ast;
+                switch (builtin.BuiltinKind) {
+                    case Langite.AstBuiltinKind.Void:
+                        return new Langite.TypeVoid();
+                    case Langite.AstBuiltinKind.Type:
+                        return new Langite.TypeType();
+                    case Langite.AstBuiltinKind.Bool:
+                        return new Langite.TypeType();
+                    case Langite.AstBuiltinKind.Int:
+                        return new Langite.TypeInteger(true);
+                    case Langite.AstBuiltinKind.UInt:
+                        return new Langite.TypeInteger(false);
+                    case Langite.AstBuiltinKind.Float:
+                        return new Langite.TypeFloat();
+                    default:
+                        throw new Langite.Unimplemented(builtin.Location, `'ResolveTypes' builtin is not implemented for ${builtin.BuiltinKind}`);
+                }
+            }
+            default:
+                throw new Langite.Unimplemented(ast.Location, `'EvalType' is not implemented for ${ast.Kind}`);
+        }
+    }
+    Langite.EvalType = EvalType;
+})(Langite || (Langite = {}));
+var Langite;
+(function (Langite) {
+    function IsConstant(ast) {
+        var _a;
+        switch (ast.Kind) {
+            case Langite.AstKind.File: {
+                return false;
+            }
+            case Langite.AstKind.Block: {
+                return false;
+            }
+            case Langite.AstKind.Declaration: {
+                const declaration = ast;
+                return declaration.IsConstant;
+            }
+            case Langite.AstKind.Name: {
+                const name = ast;
+                return (_a = name.ResolvedDeclaration) === null || _a === void 0 ? void 0 : _a.IsConstant;
+            }
+            case Langite.AstKind.Integer: {
+                return true;
+            }
+            case Langite.AstKind.Float: {
+                return true;
+            }
+            case Langite.AstKind.Unary: {
+                const unary = ast;
+                return IsConstant(unary.Operand);
+            }
+            case Langite.AstKind.Binary: {
+                const binary = ast;
+                return IsConstant(binary.Left) && IsConstant(binary.Right);
+            }
+            case Langite.AstKind.Call: {
+                const call = ast;
+                if (!IsConstant(call.Operand))
+                    return false;
+                let constant = true;
+                call.Arguments.forEach((argument) => {
+                    if (!IsConstant(argument))
+                        constant = false;
+                });
+                return constant;
+            }
+            case Langite.AstKind.Function: {
+                return true;
+            }
+            case Langite.AstKind.Procedure: {
+                return false;
+            }
+            case Langite.AstKind.Return: {
+                return false;
+            }
+            case Langite.AstKind.If: {
+                return false;
+            }
+            case Langite.AstKind.Builtin: {
+                return true;
+            }
+            default:
+                throw new Langite.Unimplemented(ast.Location, `'IsConstant' is not implemented for ${ast.Kind}`);
+        }
+    }
+    function ResolveTypes(ast, suggestedType) {
+        var _a, _b;
+        if (ast.ResolvedType !== null)
+            return;
+        switch (ast.Kind) {
+            case Langite.AstKind.File:
+                {
+                    const file = ast;
+                    file.ResolvedType = new Langite.TypeVoid();
+                    file.Statements.forEach((statement) => {
+                        ResolveTypes(statement, null);
+                    });
+                }
+                break;
+            case Langite.AstKind.Block:
+                {
+                    const block = ast;
+                    block.ResolvedType = new Langite.TypeVoid();
+                    block.Statements.forEach((statement) => {
+                        ResolveTypes(statement, null);
+                    });
+                }
+                break;
+            case Langite.AstKind.Declaration:
+                {
+                    const declaration = ast;
+                    if (declaration.Type !== null) {
+                        ResolveTypes(declaration.Type, new Langite.TypeType());
+                        if (!((_a = declaration.Type.ResolvedType) === null || _a === void 0 ? void 0 : _a.IsEqual(new Langite.TypeType()))) {
+                            throw new Langite.Unimplemented(declaration.Type.Location, "declaration type not a type error is not implemented");
+                        }
+                        if (!IsConstant(declaration.Type))
+                            throw new Langite.ExpectedConstant(declaration.Type);
+                        declaration.ResolvedType = Langite.EvalType(declaration.Type);
+                    }
+                    if (declaration.Value !== null) {
+                        ResolveTypes(declaration.Value, declaration.ResolvedType);
+                        if (declaration.ResolvedType === null) {
+                            declaration.ResolvedType = declaration.Value.ResolvedType;
+                        }
+                        else {
+                        }
+                        if (declaration.IsConstant && !IsConstant(declaration.Value))
+                            throw new Langite.ExpectedConstant(declaration.Value);
+                    }
+                }
+                break;
+            case Langite.AstKind.Name:
+                {
+                    const name = ast;
+                    ResolveTypes(name.ResolvedDeclaration, null);
+                    name.ResolvedType = (_b = name.ResolvedDeclaration) === null || _b === void 0 ? void 0 : _b.ResolvedType;
+                }
+                break;
+            case Langite.AstKind.Integer:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Float:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Unary:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Binary:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Call:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Function:
+                {
+                    const function_ = ast;
+                    function_.Parameters.forEach((parameter) => {
+                        ResolveTypes(parameter, null);
+                    });
+                    ResolveTypes(function_.ReturnType, new Langite.TypeType());
+                    if (!IsConstant(function_.ReturnType))
+                        throw new Langite.ExpectedConstant(function_.ReturnType);
+                    if (function_.Body !== null) {
+                        const parameterTypes = function_.Parameters.map((parameter) => parameter.ResolvedType);
+                        const returnType = Langite.EvalType(function_.ReturnType);
+                        function_.ResolvedType = new Langite.TypeFunction(parameterTypes, returnType);
+                        ResolveTypes(function_.Body, null);
+                    }
+                    else {
+                        function_.ResolvedType = new Langite.TypeType();
+                    }
+                }
+                break;
+            case Langite.AstKind.Procedure:
+                {
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Return:
+                {
+                    const return_ = ast;
+                    return_.ResolvedType = new Langite.TypeVoid();
+                    if (return_.Value !== null) {
+                        ResolveTypes(return_.Value, null);
+                    }
+                }
+                break;
+            case Langite.AstKind.If:
+                {
+                    const if_ = ast;
+                    if_.ResolvedType = new Langite.TypeVoid();
+                    throw new Langite.Unimplemented(ast.Location, `'${ast.Kind}' is not implemented`);
+                }
+                break;
+            case Langite.AstKind.Builtin:
+                {
+                    const builtin = ast;
+                    switch (builtin.BuiltinKind) {
+                        case Langite.AstBuiltinKind.Void:
+                            {
+                                builtin.ResolvedType = new Langite.TypeType();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.Type:
+                            {
+                                builtin.ResolvedType = new Langite.TypeType();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.Bool:
+                            {
+                                builtin.ResolvedType = new Langite.TypeBool();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.Int:
+                            {
+                                builtin.ResolvedType = new Langite.TypeType();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.UInt:
+                            {
+                                builtin.ResolvedType = new Langite.TypeType();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.Float:
+                            {
+                                builtin.ResolvedType = new Langite.TypeType();
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.PrintInt:
+                            {
+                                builtin.ResolvedType = new Langite.TypeProcedure([new Langite.TypeInteger(true)], new Langite.TypeVoid());
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.PrintUInt:
+                            {
+                                builtin.ResolvedType = new Langite.TypeProcedure([new Langite.TypeInteger(false)], new Langite.TypeVoid());
+                            }
+                            break;
+                        case Langite.AstBuiltinKind.Println:
+                            {
+                                builtin.ResolvedType = new Langite.TypeProcedure([], new Langite.TypeVoid());
+                            }
+                            break;
+                        default:
+                            throw new Langite.Unimplemented(builtin.Location, `'ResolveTypes' builtin is not implemented for ${builtin.BuiltinKind}`);
+                    }
+                }
+                break;
+            default:
+                throw new Langite.Unimplemented(ast.Location, `'ResolveTypes' is not implemented for ${ast.Kind}`);
+        }
+        if (ast.ResolvedType === null)
+            throw new Langite.Unimplemented(ast.Location, `no type assigned for ${ast.Kind}`);
+    }
+    Langite.ResolveTypes = ResolveTypes;
+})(Langite || (Langite = {}));
 function PrintTokens(filepath, source) {
     try {
         const lexer = new Langite.Lexer(filepath, source);
@@ -1242,6 +1570,8 @@ function CheckAst(filepath, source) {
         const file = parser.ParseFile();
         Langite.ResolveNames(file, [{}], [{
                 "void": Langite.AstBuiltin.CreateConstDeclaration("void", Langite.AstBuiltinKind.Void),
+                "type": Langite.AstBuiltin.CreateConstDeclaration("type", Langite.AstBuiltinKind.Type),
+                "bool": Langite.AstBuiltin.CreateConstDeclaration("bool", Langite.AstBuiltinKind.Bool),
                 "int": Langite.AstBuiltin.CreateConstDeclaration("int", Langite.AstBuiltinKind.Int),
                 "uint": Langite.AstBuiltin.CreateConstDeclaration("uint", Langite.AstBuiltinKind.UInt),
                 "float": Langite.AstBuiltin.CreateConstDeclaration("float", Langite.AstBuiltinKind.Float),
@@ -1249,6 +1579,7 @@ function CheckAst(filepath, source) {
                 "print_uint": Langite.AstBuiltin.CreateConstDeclaration("print_uint", Langite.AstBuiltinKind.PrintUInt),
                 "println": Langite.AstBuiltin.CreateConstDeclaration("println", Langite.AstBuiltinKind.Println),
             }], 1);
+        Langite.ResolveTypes(file, null);
         return file.Print(0);
     }
     catch (e) {
