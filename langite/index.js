@@ -549,12 +549,24 @@ var Langite;
     Langite.AstIf = AstIf;
     let AstBuiltinKind;
     (function (AstBuiltinKind) {
+        AstBuiltinKind[AstBuiltinKind["Void"] = 0] = "Void";
+        AstBuiltinKind[AstBuiltinKind["Int"] = 1] = "Int";
+        AstBuiltinKind[AstBuiltinKind["UInt"] = 2] = "UInt";
+        AstBuiltinKind[AstBuiltinKind["Float"] = 3] = "Float";
+        AstBuiltinKind[AstBuiltinKind["PrintInt"] = 4] = "PrintInt";
+        AstBuiltinKind[AstBuiltinKind["PrintUInt"] = 5] = "PrintUInt";
+        AstBuiltinKind[AstBuiltinKind["Println"] = 6] = "Println";
     })(AstBuiltinKind = Langite.AstBuiltinKind || (Langite.AstBuiltinKind = {}));
     class AstBuiltin extends Ast {
         constructor(builtinKind) {
             super();
             this.Kind = AstKind.Builtin;
             this.BuiltinKind = builtinKind;
+        }
+        static CreateConstDeclaration(name, builtinKind) {
+            const builtinLocation = new Langite.SourceLocation("builtin.langite", "", 0, 1, 1);
+            const declaration = new AstDeclaration(new Langite.Token(Langite.TokenKind.Name, builtinLocation, name.length, name), new Langite.Token(Langite.TokenKind.Colon, builtinLocation, 1), null, new Langite.Token(Langite.TokenKind.Colon, builtinLocation, 1), new AstBuiltin(builtinKind));
+            return declaration;
         }
         get Location() {
             return new Langite.SourceLocation("builtin.langite", "", 0, 1, 1);
@@ -1228,7 +1240,15 @@ function CheckAst(filepath, source) {
     try {
         const parser = new Langite.Parser(filepath, source);
         const file = parser.ParseFile();
-        Langite.ResolveNames(file, [{}], [{}], 1);
+        Langite.ResolveNames(file, [{}], [{
+                "void": Langite.AstBuiltin.CreateConstDeclaration("void", Langite.AstBuiltinKind.Void),
+                "int": Langite.AstBuiltin.CreateConstDeclaration("int", Langite.AstBuiltinKind.Int),
+                "uint": Langite.AstBuiltin.CreateConstDeclaration("uint", Langite.AstBuiltinKind.UInt),
+                "float": Langite.AstBuiltin.CreateConstDeclaration("float", Langite.AstBuiltinKind.Float),
+                "print_int": Langite.AstBuiltin.CreateConstDeclaration("print_int", Langite.AstBuiltinKind.PrintInt),
+                "print_uint": Langite.AstBuiltin.CreateConstDeclaration("print_uint", Langite.AstBuiltinKind.PrintUInt),
+                "println": Langite.AstBuiltin.CreateConstDeclaration("println", Langite.AstBuiltinKind.Println),
+            }], 1);
         return file.Print(0);
     }
     catch (e) {

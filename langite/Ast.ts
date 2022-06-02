@@ -434,6 +434,13 @@ namespace Langite {
     }
 
     export enum AstBuiltinKind {
+        Void,
+        Int,
+        UInt,
+        Float,
+        PrintInt,
+        PrintUInt,
+        Println,
     }
 
     export class AstBuiltin extends Ast {
@@ -443,6 +450,18 @@ namespace Langite {
         public constructor(builtinKind: AstBuiltinKind) {
             super();
             this.BuiltinKind = builtinKind;
+        }
+
+        public static CreateConstDeclaration(name: string, builtinKind: AstBuiltinKind): AstDeclaration {
+            const builtinLocation = new SourceLocation("builtin.langite", "", 0, 1, 1);
+            const declaration = new AstDeclaration(
+                new Token(TokenKind.Name, builtinLocation, name.length, name),
+                new Token(TokenKind.Colon, builtinLocation, 1),
+                null,
+                new Token(TokenKind.Colon, builtinLocation, 1),
+                new AstBuiltin(builtinKind),
+            );
+            return declaration;
         }
 
         public override get Location(): SourceLocation {
