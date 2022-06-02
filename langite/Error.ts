@@ -96,4 +96,21 @@ namespace Langite {
         }
     }
 
+    export class NameNotFound extends Error {
+        public Name: AstName;
+
+        public constructor(name: AstName) {
+            super();
+            this.Name = name;
+        }
+
+        public override get Location(): SourceLocation {
+            return this.Name.Location;
+        }
+
+        public override get Message(): string {
+            return `${this.Name.Location}: Error: Cannot find name '${this.Name.NameToken.Value}'`;
+        }
+    }
+
 }

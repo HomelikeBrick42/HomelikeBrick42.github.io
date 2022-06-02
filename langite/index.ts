@@ -41,6 +41,7 @@ function CheckAst(filepath: string, source: string): string {
     try {
         const parser = new Langite.Parser(filepath, source);
         const file = parser.ParseFile();
+        Langite.ResolveNames(file, [{}], [{}], 1);
         return file.Print(0);
     } catch (e) {
         if (!(e instanceof Langite.Error)) {

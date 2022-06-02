@@ -146,6 +146,7 @@ namespace Langite {
     export class AstName extends Ast {
         public Kind = AstKind.Name;
         public NameToken: Token;
+        public ResolvedDeclaration: AstDeclaration | null = null;
 
         public constructor(nameToken: Token) {
             super();
@@ -159,6 +160,9 @@ namespace Langite {
         public override Print(indent: number): string {
             let result = PrintHeader(indent, this);
             result += `${GetIndent(indent + 1)}Value: '${this.NameToken.Value}'\n`;
+            if (this.ResolvedDeclaration !== null) {
+                result += `${GetIndent(indent + 1)}Resolved Declaration Location: ${this.ResolvedDeclaration.Location}\n`;
+            }
             return result;
         }
     }
