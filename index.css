@@ -27,6 +27,7 @@ body {
     grid-column-start: 1;
     grid-column-start: 2;
     text-align: center;
+    color: rgb(236, 236, 236);
 }
 
 .right {
