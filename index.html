@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>An Intoduction to Geometric Algebra</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css"
+            integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB" crossorigin="anonymous">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js"
+            integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+            crossorigin="anonymous"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/contrib/auto-render.min.js"
+            integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz"
+            crossorigin="anonymous"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                    ],
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>An Intoduction to Geometric Algebra</h1>
+
+        This page is still WIP, some things may be incomplete <br>
+        <br>
+
+        <small>
+            This introduction uses the plane-based interpretation of geometric algebra,
+            even in VGA, because it works alot better for using PGA and CGA
+            without having to create dual versions of all the operators and products <br>
+            And because its geometrically more intuitive,
+            even if vectors arent arrows like people from linear algebra might be used to <br>
+        </small>
+
+        <h2>VGA</h2>
+        3D VGA (vector/vanilla geometric algebra) has 3 basis elements $e_1$, $e_2$, and $e_3$,
+        which correspond to the $x$, $y$, and $z$ axis planes respectively that all pass through the origin <br>
+        All the basis elements square to 1: <br>
+        $ (e_1)^2 = 1 $ <br>
+        $ (e_2)^2 = 1 $ <br>
+        $ (e_3)^2 = 1 $ <br>
+        (This is similar to how $i$ in complex numbers is a magic symbol that squares to -1) <br>
+        <br>
+
+        The basis elements are also anti-commutative, where reversing their multiplication order introduces a minus
+        sign: $ e_i e_j = -e_j e_i $ when $ (i \not= j) $ <br>
+        And because dealing with basis elements that are multiplied together is so common there is a shorthand
+        $ e_{ij} = e_i e_j $ <br>
+        <br>
+
+        All values in geometric algebra are both objects and transformations <br>
+        Multiplying values together like $AB$ gives you a transformation that does $A$ and then $B$ <br>
+        Multiplying any value by a non-zero scalar does not change the object or transformation it represents, but it
+        will multiply its <i>weight</i> <br>
+        Adding values together like $A + B$ gives you a <i>weighted average</i> of both $A$ and $B$,
+        this may not always give an object that has a geometric meaning,
+        but the transformation will be some average of the two <br>
+        E.g. if you do $2A + B$ then the resulting transformation will be more like $A$,
+        compared to if you did just $A + B$ <br>
+
+        <h2>Orientations</h2>
+        $e_1 + e_2$ is the plane that is at a 45 degree angle half way between $e_1$ and $e_2$,
+        but $e_1 + 2e_2$ is at a 60 degree angle, more like $e_2$ than $e_1$ <br>
+        Which way is "more like $e_2$" depends on arbitrary normal directions that is chosen for each basis plane,
+        it will be rotating the way that makes the normal of the resulting plane more like $e_2$ <br>
+        It does not matter which normal direction is chosen for the basis planes,
+        as long as it is chosen consistiently <br>
+        The plane $-p$ has its normal going in the opposite direction to the plane $p$ <br>
+        <br>
+
+        TODO: talk about rotors <br>
+
+        <h2>Operators</h2>
+
+        <h3>Grade Selection</h3>
+        The grade of a term is how many basis elements are multiplied together,
+        scalars like $1$ are grade 0, vectors like $e_1$ are grade 1, bivectors like $e_{12}$ are grade 2, etc <br>
+        $ \langle A \rangle _i $ selects the $i$th grade parts of $A$<br>
+        If there is no subscript like $\langle A \rangle$ then it gets the scalar part (grade 0) of $A$<br>
+        E.g. $ \langle 1 + 2e_1 + 3e_2 + 4e_{12} + 5e_{13} \rangle _1 = 2e_1 + 3e_2 $
+        because $e_1$ and $e_2$ have grade 1 <br>
+        <br>
+        TODO: improve this <br>
+
+        <h3>Reverse</h3>
+        The reverse operator ($\dagger$) gives the reverse of any transformation <br>
+        It gives the same multivector but with all the basis elements of its terms reversed <br>
+        E.g. $ (e_{123})^\dagger = e_{321} $ or $ (e_{12})^\dagger = e_{21} $ <br>
+        For scalars, this does nothing <br>
+
+        <h3>Sandwich Product</h3>
+        This isnt an operator but its how transformations are applied to values <br>
+        $ A^\dagger B A $ applies the transformation $A$ to the object $B$ <br>
+        This works because it gives the transformation that first does the reverse of $A$,
+        then the transformation $B$, and then applies the transformation $A$ to go undo the reverse $A$ <br>
+        Its similar to how rotating vectors around points works in linear algebra,
+        people commonly do $rotate(B - A) + A$ to rotate the vector $B$ around the point $A$ <br>
+        <small>
+            Note: The sandwich product will not return the same kind of object as $B$
+            unless $A$ is an all-even or all-odd grade multivector <br>
+        </small>
+
+        <h3>Wedge Product</h3>
+        The wedge product ($\wedge$) gets the intersection of objects,
+        its definition is $ A_i \wedge B_j = \langle A_iB_j \rangle _{i + j} $<br>
+        where $A_i$ has grade $i$, and $B_j$ has grade $j$ <br>
+        The wedge product is anti-commutative: $ A \wedge B = -B \wedge A $ <br>
+        For general multivectors, distribute through linearity to all combinations of terms of the 2 multivectors <br>
+        The wedge product for linearly independant values is the same as the geometric product,
+        e.g. $e_1 \wedge e_2 = e_{12}$ <br>
+        <br>
+        Vectors are planes and they do planar reflections,
+        if you intersect 2 planes then you get a line (a bivector) which does line reflections,
+        if you intersect a plane and a line, then you get a point (a trivector) which does point reflections <br>
+        TODO: should this be explained earlier? <br>
+        <small>
+            Though points are pretty useless in VGA, since all planes and lines can only pass through the origin,
+            the only point that exists is the origin $e_{123}$ <br>
+            PGA is what allows planes/lines/points to not have to be at the origin <br>
+        </small>
+
+        <h3>Inner Product</h3>
+        TODO: explain this, its definition is $ A_i \cdot B_j = \langle A_iB_j \rangle _{|i - j|} $ <br>
+        where $A_i$ has grade $i$, and $B_j$ has grade $j$ <br>
+        The inner product is commutative: $ A \cdot B = B \cdot A $ <br>
+        For general multivectors, distribute through linearity to all combinations of terms of the 2 multivectors <br>
+        The inner product for linearly dependant values is the same as the geometric product,
+        e.g. $e_1 \cdot e_1 = e_{11} = 1$ <br>
+        <br>
+        TODO: maybe also explain left/right contraction? <br>
+
+        <h3>Dual</h3>
+        <small>
+            Note: The dual is hard to define formally or as a single equation,
+            so thats why this definition relies on examples and less techincal language <br>
+        </small>
+        The dual ($\star$) is a unary operator that is defined as the thing that you would multiply a term by to
+        get the "pseudoscalar" (usually called $I$, its the highest grade object in the algebra being used) <br>
+        Ignoring scaling, its the solution to the equation $ A (\star A) = I $ for a single term <br>
+        To get the dual of a multivector, distribute through linearity and do the dual operation on every term in the
+        multivector <br>
+        It mostly exists to define the regressive product <br>
+        In 3D VGA $ I = e_{123} $ and some examples are: <br>
+        $ \star 1 = e_{123} $ <br>
+        $ \star e_1 = e_{23} $ <br>
+        $ \star e_2 = -e_{13} $ (the negative sign is because reordering the basis elements to produce the $I$ negates
+        the result: $ e_2(-e_{13}) = -e_{213} = e_{123} $) <br>
+        $ \star e_{12} = e_3 $ <br>
+        $ \star 5e_1 = 5e_{23} $ (any scaling of the input is conserved in the output) <br>
+
+        <h3>Regressive Product</h3>
+        The regressive product ($\vee$) joins objects together,
+        its definition is $ A \vee B = \star (\star A \wedge \star B) $ <br>
+        Like the wedge product, the regressive product is anti-commutative: $ A \vee B = -B \vee A $ <br>
+        <br>
+        If you join 2 points you get the line connecting them,
+        and if you join a point and a line then you get the plane that passes through the line and the point <br>
+        The regressive product is mostly useless in VGA, but it becomes more useful in other algebras like PGA <br>
+
+        <h3>Projection</h3>
+        Not an operator, and not useful until PGA,
+        but the formula for projecting any object $A$ onto any object $B$ is $(A \cdot B)B$ <br>
+        TODO: explain more <br>
+
+        <h2>PGA</h2>
+        PGA (projective geometric algebra) is just like VGA,
+        except it adds a new basis element $e_0$ that represents the plane at infinity <br>
+        $e_0$ is different from the other basis elements because $ (e_0)^2 = 0 $ <br>
+        <small>
+            Note: Sometimes people will use $e_ \infty$ instead of $e_0$ since its the plane at infinity <br>
+            Fun Fact: If you make $e_0$ square to 1 instead, then you get Spherical PGA,
+            and if you make $e_0$ square to -1, then you get Hyperbolic PGA, so PGA can even do
+            non-euclidean geometry! <br>
+        </small>
+        $e_0$ is what allows planes to move away from the origin <br>
+        Because adding objects in geometric algebra is like an average,
+        $e_1 + e_0$ is $e1$ but "more like $e_0$" which moves $e1$ in its normal direction that was chosen earlier,
+        specifically it is 1 unit from the origin <br>
+        Just like all addition, the relative weight of the things that you are adding matters,
+        $e_1 + 2e_0$ moves $e_1$ 2 units in its normal direction <br>
+        And now, you can intersect planes that are not at the origin to get lines that are not at the origin,
+        and then intersect those to get points which arent at the origin too! <br>
+        PGA has the ability to do any rigid transformation <br>
+        <br>
+
+        TODO: talk about rotors <br>
+        TODO: talk about the geometric view of PGA being a higher dimensional space <br>
+
+        <h2>CGA</h2>
+        CGA (conformal geometric algebra) is like PGA, except $e_0$ is split into $e_+$ and $e_-$ <br>
+        $ (e_+)^2 = 1 $ <br>
+        $ (e_-)^2 = -1 $ <br>
+        For convenience, $e_0$ can then be defined as $e_0 = e_+ + e_-$,
+        so that equations can be written as if you were using PGA <br>
+        <small>
+            Note: Sometimes people will use $e_ \infty$ or $n_ \infty$ instead of $e_0$ when using CGA,
+            since its the sphere at infinity,
+            and then use $n_0 = e_+ - e_-$ to refer to the zero-radius sphere at the origin <br>
+        </small>
+        <br>
+
+        TODO: explain more <br>
+    </body>
+</html>
