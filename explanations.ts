@@ -91,33 +91,75 @@ vec3 rotate_xy(vec3 v, float angle) {
     );
 }
 
+float origin_plane_distance(vec3 normal, vec3 position) {
+    return abs(dot(position, normal));
+}
+
+// https://iquilezles.org/articles/distfunctions/
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
 void main() {
     vec3 direction = normalize(vec3(1, uv.yx));
-    direction = rotate_xz(direction, rotation_xz);
     direction = rotate_xy(direction, rotation_xy);
+    direction = rotate_xz(direction, rotation_xz);
 
-    vec3 origin = direction * -2.0;
+    vec3 position = vec3(-2.5, 0, 0);
+    position = rotate_xy(position, rotation_xy);
+    position = rotate_xz(position, rotation_xz);
 
-    o_Color = vec4(direction * 0.5 + 0.5, 1.0);
+    vec3 color = vec3(0, 0, 0);
+    for (int steps = 0; steps < 100; steps++) {
+        vec3 planes[3] = vec3[3](
+            vec3(1, 0, 0),
+            vec3(0, 1, 0),
+            vec3(0, 0, 1)
+        );
+
+        float box = sdBox(position, vec3(1));
+
+        int closest_plane = 0;
+        float closest_distance = max(origin_plane_distance(planes[0], position), box);
+        for (int i = 1; i < planes.length(); i++) {
+            float distance = max(origin_plane_distance(planes[i], position), box);
+            if (distance < closest_distance) {
+                closest_distance = distance;
+                closest_plane = i;
+            }
+        }
+
+        if (abs(closest_distance) < 0.01) {
+            color = planes[closest_plane];
+            break;
+        }
+
+        if (closest_distance > 10.0)
+            break;
+        position += direction * closest_distance;
+    }
+    o_Color = vec4(color, 1);
 }
 `
     );
 
-    let rotation_xz = 0;
-    let rotation_xy = 0;
+    let rotation_xz = -0.1 * Math.PI;
+    let rotation_xy = 0.075 * Math.PI;
     canvas.addEventListener("mousemove", (event) => {
         if (event.buttons & 1) {
-            rotation_xz += (event.movementX / canvas.width) * Math.PI;
+            rotation_xz -= (event.movementX / canvas.width) * Math.PI;
 
-            rotation_xy -= (event.movementY / canvas.width) * Math.PI;
-            rotation_xy = Math.min(Math.max(rotation_xy, -Math.PI), Math.PI);
+            rotation_xy += (event.movementY / canvas.width) * Math.PI;
+            rotation_xy = Math.min(Math.max(rotation_xy, Math.PI * -0.5), Math.PI * 0.5);
         }
     });
 
     gl.useProgram(shader);
     let rotation_xz_location = gl.getUniformLocation(shader, "rotation_xz");
     let rotation_xy_location = gl.getUniformLocation(shader, "rotation_xy");
-    loop((dt) => {
+    loop((_) => {
         gl.uniform1f(rotation_xz_location, rotation_xz);
         gl.uniform1f(rotation_xy_location, rotation_xy);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
